@@ -1,0 +1,16 @@
+{
+  "name": "React + Node.js Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode"
+  ],
+  "forwardPorts": [5173],
+  "postCreateCommand": "cd frontend && npm install",
+  "remoteUser": "node"
+}
