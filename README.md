@@ -1,8 +1,19 @@
 # ITGoApp
-IT*学習ゲーム
 
-##開発方式について
+## 概要
 
-コンテナーを利用して開発。
-※コンテナーの中に入って、Git pushができない現象が発生。暫定対策として、WSLに繋ぎなおすとpushできることを確認。
-また、git config user.nameとuser.emailの設定はおそらく必要
+クイズ形式でITの勉強ができるアプリ
+
+## 前提
+
+- VSCode、VScode Remote - Containersが利用できること
+- Gitが利用できること
+- WSLが利用できこと(Windowsのみ)
+- Dockerが利用できること(Windowsのみ)
+- Rancher Desktopが利用できること(Macのみ)
+
+## 開発方式について
+
+- コンテナを利用して開発
+- git config設定もしておくこと
+- Node.js + React(Vite)形式
