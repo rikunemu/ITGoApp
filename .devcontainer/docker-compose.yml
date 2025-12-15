@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # 1. 開発コンテナの定義（React/Node.js環境）
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # プロジェクト全体をコンテナの /workspace にマウント
+      - ..:/workspace:cached
+    # コンテナがVS Codeによって接続されるまで停止しないようにする
+    command: /bin/sh -c "sleep infinity"
+    environment:
+      # アプリケーションからDBに接続するための環境変数 (ホスト名はサービス名 'db')
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: user
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: dev_db
+    depends_on:
+      - db # dbコンテナが起動してからappコンテナを起動するように依存関係を設定
+
+  # 2. PostgreSQL データベースコンテナの定義
+  db:
+    # 最新の安定版 PostgreSQL 16 の alpine版を使用 (軽量なイメージ)
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      # データベース接続情報 (dev_dbというDBを初期作成)
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dev_db
+    volumes:
+      # データを永続化するためのボリューム
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # ホストマシンの5432ポートをコンテナの5432ポートに転送
+      - "5432:5432"
+
+volumes:
+  # データベースのデータ保存用ボリューム
+  db-data:
