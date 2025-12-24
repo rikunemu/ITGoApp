@@ -46,7 +46,7 @@ export LC_ALL=C.UTF-8
 2. すでに今回の作業ブランチにいる場合はそのまま
 3. いない場合は、git checkout develop で移動する
 4. git fetch で最新情報を取得
-5. git pull でリモートの情報と合わせます
+5. git pull origin develop でリモートの情報と合わせます
 6. git checkout -b feature/xxx(作業ブランチ名)　でブランチを発行します。ブランチ名は他の人と被らない形でお願いします
 
 ### コンテナ内で作業をする
