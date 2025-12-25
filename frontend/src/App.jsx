@@ -4,6 +4,17 @@ import './App.css';
 // バックエンドAPIのURL
 const API_URL = 'http://localhost:3001/api/questions';
 
+// ランダム出題
+// 配列のシャッフル（Fisher–Yates）
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function App() {
   // 取得した全問題リスト
   const [quizData, setQuizData] = useState([]);
@@ -15,6 +26,9 @@ function App() {
   const [result, setResult] = useState(null);
   // データ取得中かどうか
   const [isLoading, setIsLoading] = useState(true);
+  // ⭐ スコア管理用
+  const [score, setScore] = useState(0); 
+
 
   // --- データ取得 ---
   useEffect(() => {
@@ -25,7 +39,7 @@ function App() {
           throw new Error('APIからデータを取得できませんでした。');
         }
         const data = await response.json();
-        setQuizData(data);
+        setQuizData(shuffleArray(data));
       } catch (error) {
         console.error("クイズデータ取得失敗:", error);
         setResult('データの読み込みに失敗しました。バックエンドが起動しているか確認してください。');
@@ -35,6 +49,7 @@ function App() {
     };
     fetchQuiz();
   }, []); // 初回マウント時のみ実行
+
 
   const currentQuestion = quizData[currentQuestionIndex];
 
@@ -48,6 +63,7 @@ function App() {
 
     if (isCorrect) {
       setResult('正解です！🎉');
+      setScore((prev) => prev + 10); // ⭐ 正解時に10pt加算
     } else {
       setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
     }
@@ -61,7 +77,7 @@ function App() {
       } else {
         // 全問終了後の処理
         setResult('✨全問終了です！✨');
-        // ※スコア表示機能は未実装のため、必要に応じて追加してください
+        //setScore(0); // ⭐ 全問終了時にスコアリセット
       }
     }, 1500);
   };
@@ -80,6 +96,7 @@ function App() {
       <h1>ITでGo！</h1>
       {/* 問題番号の表示 */}
       <p>問題 **{currentQuestionIndex + 1} / {quizData.length}**</p>
+      <p>🎯 スコア: {score} pt</p> {/* ⭐ スコア表示 */}
 
       {/* データベースから取得した問題文を表示 */}
       <p className="question-text">{currentQuestion.question}</p>
