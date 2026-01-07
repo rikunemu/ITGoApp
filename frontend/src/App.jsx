@@ -28,6 +28,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   // ⭐ スコア管理用
   const [score, setScore] = useState(0); 
+  // 残機機能（3つ間違えたら終了）
+  const [lives, setLives] = useState(3);
 
 
   // --- データ取得 ---
@@ -59,28 +61,62 @@ function App() {
     if (!currentQuestion) return; 
 
     // 正解の判定（大文字小文字を区別しない、前後の空白を除去）
-    const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
+        const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
+  
+  let updatedLives = lives;
+  
+  if (isCorrect) {
+    setResult('正解です！🎉');
+    setScore((prev) => prev + 10);
+  } else {
+    setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+    updatedLives = lives - 1;
+    setLives(updatedLives);
+  }
 
-    if (isCorrect) {
-      setResult('正解です！🎉');
-      setScore((prev) => prev + 10); // ⭐ 正解時に10pt加算
-    } else {
-      setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+  // ⭐ setTimeout はここだけ
+  setTimeout(() => {
+    // 3回間違えたら終了
+    if (updatedLives <= 0) {
+      setResult('💀3問間違えたので終了します💀');
+      return;
     }
 
-    // 1.5秒後に次の問題へ進む（または終了）
-    setTimeout(() => {
-      if (currentQuestionIndex < quizData.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setUserAnswer('');
-        setResult(null);
-      } else {
-        // 全問終了後の処理
-        setResult('✨全問終了です！✨');
-        //setScore(0); // ⭐ 全問終了時にスコアリセット
-      }
-    }, 1500);
-  };
+    // 次の問題へ
+    if (currentQuestionIndex < quizData.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setUserAnswer('');
+      setResult(null);
+    } else {
+      setResult('✨全問終了です！✨');
+    }
+  }, 1500);
+};
+
+  //   if (isCorrect) {
+  //     setResult('正解です！🎉');
+  //     setScore((prev) => prev + 10); // ⭐ 正解時に10pt加算
+  //   } else {
+  //     setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+  //     // 不正解時にLivesを減らす
+  //     setLives((prev) => prev - 1);
+  //   }
+
+  //   // 1.5秒後に次の問題へ進む（または終了）
+  //   setTimeout(() => {
+  //     if(lives === 0){
+  //       setResult('💀3問間違えたので終了します💀');
+  //     }else if(currentQuestionIndex < quizData.length - 1) {
+  //       setCurrentQuestionIndex(currentQuestionIndex + 1);
+  //       setUserAnswer('');
+  //       setResult(null);
+  //     } else {
+  //       // 全問終了後の処理
+  //       setResult('✨全問終了です！✨');
+  //       //setScore(0); // ⭐ 全問終了時にスコアリセット
+  //     }
+  //   }, 1500);
+  // };
 
   if (isLoading) {
     return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
