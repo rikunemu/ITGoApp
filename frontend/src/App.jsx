@@ -45,6 +45,16 @@ const handleLogin = async (e) => {
     const data = await response.json();
     console.log("サーバーからのデータ:", data);
 
+    if (!response.ok) {
+      alert(data.error || 'ログインに失敗しました');
+      return;
+    }
+
+    // ★ここが最重要
+    localStorage.setItem('token', data.token);
+    setToken(data.token);   // ← これで画面が切り替わる
+
+
   } catch (error) {
     console.error("❌ Fetchエラーの詳細:", error.name, error.message);
     if (error.name === 'AbortError') {
