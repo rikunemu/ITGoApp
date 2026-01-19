@@ -6,6 +6,17 @@ const API_URL = 'http://localhost:3001/api/questions';
 // ログイン画面のURL(ログインしているかどうかでクイズ画面とのだし分けを行う。今は未実装)
 const LOGIN_URL = 'http://localhost:3001/api/login';
 
+// ランダム出題
+// 配列のシャッフル（Fisher–Yates）
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function App() {
   // --- 状態管理 (ログイン関連) ---
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -22,48 +33,55 @@ function App() {
   const [result, setResult] = useState(null);
   // データ取得中かどうか
   const [isLoading, setIsLoading] = useState(true);
+  // ⭐ スコア管理用
+  const [score, setScore] = useState(0); 
+  // 残機機能（3つ間違えたら終了）
+  const [lives, setLives] = useState(3);
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  console.log("--- ログイン処理開始 ---");
-  console.log("宛先URL:", LOGIN_URL);
+  const currentQuestion = quizData[currentQuestionIndex];
 
-  try {
-    // タイムアウト（5秒待ってもダメなら諦める）を設定
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch(LOGIN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      signal: controller.signal
-    });
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    console.log("--- ログイン処理開始 ---");
+    console.log("宛先URL:", LOGIN_URL);
 
-    clearTimeout(timeoutId);
-    console.log("サーバー応答ステータス:", response.status);
-    const data = await response.json();
-    console.log("サーバーからのデータ:", data);
+    try {
+      // タイムアウト（5秒待ってもダメなら諦める）を設定
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    if (!response.ok) {
-      alert(data.error || 'ログインに失敗しました');
-      return;
+      const response = await fetch(LOGIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      console.log("サーバー応答ステータス:", response.status);
+      const data = await response.json();
+      console.log("サーバーからのデータ:", data);
+
+      if (!response.ok) {
+        alert(data.error || 'ログインに失敗しました');
+        return;
+      }
+
+      // ★ここが最重要
+      localStorage.setItem('token', data.token);
+      setToken(data.token);   // ← これで画面が切り替わる
+
+
+    } catch (error) {
+      console.error("❌ Fetchエラーの詳細:", error.name, error.message);
+      if (error.name === 'AbortError') {
+        alert("サーバーから応答がありません（タイムアウト）");
+      } else {
+        alert("通信エラー: " + error.message);
+      }
     }
-
-    // ★ここが最重要
-    localStorage.setItem('token', data.token);
-    setToken(data.token);   // ← これで画面が切り替わる
-
-
-  } catch (error) {
-    console.error("❌ Fetchエラーの詳細:", error.name, error.message);
-    if (error.name === 'AbortError') {
-      alert("サーバーから応答がありません（タイムアウト）");
-    } else {
-      alert("通信エラー: " + error.message);
-    }
-  }
-};
+  };
 
 //   // --- ログイン処理 ---
 // const handleLogin = async (e) => {
@@ -127,7 +145,7 @@ const handleLogin = async (e) => {
       const data = await response.json();
       console.log("取得データ:", data);
       console.log(data)
-      setQuizData(data);
+      setQuizData(shuffleArray(data));
     } catch (err) {
       console.error("フェッチエラー:", err);
       setResult("データの取得に失敗しました。");
@@ -162,33 +180,68 @@ const handleLogin = async (e) => {
 
   // const currentQuestion = quizData[currentQuestionIndex];
 
-  const handleSubmitQuiz = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!currentQuestion) return; 
 
     // 正解の判定（大文字小文字を区別しない、前後の空白を除去）
-    const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
+        const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
+  
+  let updatedLives = lives;
+  
+  if (isCorrect) {
+    setResult('正解です！🎉');
+    setScore((prev) => prev + 10);
+  } else {
+    setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+    updatedLives = lives - 1;
+    setLives(updatedLives);
+  }
 
-    if (isCorrect) {
-      setResult('正解です！🎉');
-    } else {
-      setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+  // ⭐ setTimeout はここだけ
+  setTimeout(() => {
+    // 3回間違えたら終了
+    if (updatedLives <= 0) {
+      setResult('💀3問間違えたので終了します💀');
+      return;
     }
 
-    // 1.5秒後に次の問題へ進む（または終了）
-    setTimeout(() => {
-      if (currentQuestionIndex < quizData.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setUserAnswer('');
-        setResult(null);
-      } else {
-        // 全問終了後の処理
-        setResult('✨全問終了です！✨');
-        // ※スコア表示機能は未実装のため、必要に応じて追加してください
-      }
-    }, 1500);
-  };
+    // 次の問題へ
+    if (currentQuestionIndex < quizData.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setUserAnswer('');
+      setResult(null);
+    } else {
+      setResult('✨全問終了です！✨');
+    }
+  }, 1500);
+};
+
+  //   if (isCorrect) {
+  //     setResult('正解です！🎉');
+  //     setScore((prev) => prev + 10); // ⭐ 正解時に10pt加算
+  //   } else {
+  //     setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+  //     // 不正解時にLivesを減らす
+  //     setLives((prev) => prev - 1);
+  //   }
+
+  //   // 1.5秒後に次の問題へ進む（または終了）
+  //   setTimeout(() => {
+  //     if(lives === 0){
+  //       setResult('💀3問間違えたので終了します💀');
+  //     }else if(currentQuestionIndex < quizData.length - 1) {
+  //       setCurrentQuestionIndex(currentQuestionIndex + 1);
+  //       setUserAnswer('');
+  //       setResult(null);
+  //     } else {
+  //       // 全問終了後の処理
+  //       setResult('✨全問終了です！✨');
+  //       //setScore(0); // ⭐ 全問終了時にスコアリセット
+  //     }
+  //   }, 1500);
+  // };
 
   // if (isLoading) {
   //   return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
@@ -246,18 +299,30 @@ if (quizData.length === 0) {
 }
 
   // 3. ログイン済み ＆ クイズ表示
-  const currentQuestion = quizData[currentQuestionIndex];
   return (
     <div className="App">
       <div style={{ textAlign: 'right' }}>
         <button onClick={handleLogout}>ログアウト</button>
       </div>
       <h1>ITでGo！</h1>
-      <p>問題 {currentQuestionIndex + 1} / {quizData.length}</p>
-      <p className="question-text">{currentQuestion?.question}</p>
-      <form onSubmit={handleSubmitQuiz}>
-        <input type="text" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="答えを入力" disabled={result !== null} />
-        <button type="submit" disabled={result !== null}>送信</button>
+      {/* 問題番号の表示 */}
+      <p>問題 **{currentQuestionIndex + 1} / {quizData.length}**</p>
+      <p>🎯 スコア: {score} pt</p> {/* ⭐ スコア表示 */}
+
+      {/* データベースから取得した問題文を表示 */}
+      <p className="question-text">{currentQuestion.question}</p>
+
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={userAnswer}
+          onChange={(e) => setUserAnswer(e.target.value)}
+          placeholder="答えを入力"
+          disabled={result !== null}
+        />
+        <button type="submit" disabled={result !== null}>
+          {result ? '処理中...' : '送信'}
+        </button>
       </form>
       {result && <p className="result-message">{result}</p>}
     </div>
