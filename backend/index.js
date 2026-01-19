@@ -91,6 +91,15 @@ app.get('/api/questions', async (req, res) => {
   }
 });
 
+app.post('/api/login', express.json(), (req, res) => {
+  const { email, password } = req.body;
+
+  if (email === 'test@example.com' && password === 'password123') {
+    res.json({ token: 'dummy-token-123' });
+  } else {
+    res.status(401).json({ error: 'メールアドレスまたはパスワードが違います' });
+  }
+});
 
 // --- サーバー起動 ---
 // DB初期化が完了してからExpressサーバーを起動する
