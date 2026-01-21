@@ -37,6 +37,10 @@ function App() {
   const [score, setScore] = useState(0); 
   // 残機機能（3つ間違えたら終了）
   const [lives, setLives] = useState(3);
+  // ⏱️ タイムリミット機能（残り秒数）
+  const [timeLeft, setTimeLeft] = useState(10);
+  // タイムアップフラグ
+  const [isTimeUp, setIsTimeUp] = useState(false);
 
   const currentQuestion = quizData[currentQuestionIndex];
 
@@ -157,33 +161,69 @@ function App() {
 
   fetchQuiz();
 }, [token]);
-  // useEffect(() => {
-  //   if (!token) return; // ログインしてない時は取得しない
-    
-  //   const fetchQuiz = async () => {
-  //     try {
-  //       const response = await fetch(API_URL);
-  //       if (!response.ok) {
-  //         throw new Error('APIからデータを取得できませんでした。');
-  //       }
-  //       const data = await response.json();
-  //       setQuizData(data);
-  //     } catch (error) {
-  //       console.error("クイズデータ取得失敗:", error);
-  //       setResult('データの読み込みに失敗しました。バックエンドが起動しているか確認してください。');
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   fetchQuiz();
-  // }, [token]); // tokenが変わったら（ログインしたら）実行
 
-  // const currentQuestion = quizData[currentQuestionIndex];
+  // ⏱️ タイムリミット機能（10秒のカウントダウン）
+  useEffect(() => {
+    // ログインしていない、読み込み中、結果表示中、またはタイムアップしたらタイマーを開始しない
+    if (!token || isLoading || result !== null || quizData.length === 0 || isTimeUp) {
+      return;
+    }
+
+    // 残り時間が0以下になったらタイムアップ処理
+    if (timeLeft <= 0) {
+      setIsTimeUp(true);
+      handleTimeUp();
+      return;
+    }
+
+    // 1秒ごとにカウントダウン
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    // クリーンアップ：コンポーネントアンマウント時またはdependencyが変わった時にタイマー停止
+    return () => clearInterval(timer);
+  }, [timeLeft, token, isLoading, result, quizData.length, isTimeUp]);
+
+  // 問題が変わったときにタイマーをリセット
+  useEffect(() => {
+    setTimeLeft(10);
+    setIsTimeUp(false);
+  }, [currentQuestionIndex, token]);
+
+  // タイムアップ時の処理
+  const handleTimeUp = () => {
+    setResult('⏰ 時間切れです！不正解になりました。');
+    let updatedLives = lives - 1;
+    setLives(updatedLives);
+
+    setTimeout(() => {
+      // 3回間違えたら終了
+      if (updatedLives <= 0) {
+        setResult('💀3問間違えたので終了します💀');
+        return;
+      }
+
+      // 次の問題へ
+      if (currentQuestionIndex < quizData.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setUserAnswer('');
+        setResult(null);
+      } else {
+        setResult('✨全問終了です！✨');
+      }
+    }, 1500);
+  };
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!currentQuestion) return; 
+    if (!currentQuestion || isTimeUp) return; 
+
+    // ⏱️ 回答時にタイマーを停止
+    setTimeLeft(0);
+    setIsTimeUp(true);
 
     // 正解の判定（大文字小文字を区別しない、前後の空白を除去）
         const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
@@ -308,6 +348,15 @@ if (quizData.length === 0) {
       {/* 問題番号の表示 */}
       <p>問題 **{currentQuestionIndex + 1} / {quizData.length}**</p>
       <p>🎯 スコア: {score} pt</p> {/* ⭐ スコア表示 */}
+      <p>❤️ 残機: {lives}</p> {/* 残機表示 */}
+      {/* ⏱️ タイマー表示 */}
+      <p style={{ 
+        fontSize: '1.2rem', 
+        fontWeight: 'bold',
+        color: timeLeft <= 3 ? '#ff4444' : '#333'
+      }}>
+        ⏱️ 残り時間: {timeLeft} 秒
+      </p>
 
       {/* データベースから取得した問題文を表示 */}
       <p className="question-text">{currentQuestion.question}</p>
@@ -318,9 +367,9 @@ if (quizData.length === 0) {
           value={userAnswer}
           onChange={(e) => setUserAnswer(e.target.value)}
           placeholder="答えを入力"
-          disabled={result !== null}
+          disabled={result !== null || isTimeUp}
         />
-        <button type="submit" disabled={result !== null}>
+        <button type="submit" disabled={result !== null || isTimeUp}>
           {result ? '処理中...' : '送信'}
         </button>
       </form>
