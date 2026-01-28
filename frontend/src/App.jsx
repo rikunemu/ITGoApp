@@ -364,36 +364,14 @@ if (!token) {
 if (!gameStarted) {
   return (
     <div className="App">
-      <div style={{ textAlign: 'right' }}>
-        <button onClick={handleLogout}>ログアウト</button>
+      <div className="home-header">
+        <h1>🎓 ITでGo！</h1>
+        <button className="logout-btn" onClick={handleLogout}>ログアウト</button>
       </div>
-      <h1>🎓 ITでGo！</h1>
-      <div style={{ 
-        textAlign: 'center', 
-        padding: '40px 20px',
-        backgroundColor: '#f5f5f5',
-        borderRadius: '10px',
-        margin: '20px 0'
-      }}>
-        <p style={{ fontSize: '1.1rem', color: '#333', marginBottom: '20px' }}>
-          クイズ形式でITの勉強ができるアプリです。
-        </p>
-        <p style={{ fontSize: '0.95rem', color: '#666', marginBottom: '30px' }}>
-          10秒で1問に回答します。3回間違えたらゲームオーバーです。
-        </p>
-        <button 
-          onClick={() => setGameStarted(true)}
-          style={{
-            padding: '15px 40px',
-            fontSize: '1.1rem',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
+      <div className="home-content">
+        <p>クイズ形式でITの勉強ができるアプリです。</p>
+        <p>10秒で1問に回答します。3回間違えたらゲームオーバーです。</p>
+        <button className="start-button" onClick={() => setGameStarted(true)}>
           ゲーム開始 🚀
         </button>
       </div>
@@ -403,50 +381,70 @@ if (!gameStarted) {
 
 // 3. ゲーム開始済みだが、データを読み込み中の時
 if (isLoading) {
-  return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
+  return <div className="App"><div className="loading-message"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div></div>;
 }
 
 // 4. ゲーム開始済みで、読み込みも終わったが、問題が0件の時
 if (quizData.length === 0) {
-  return <div className="App"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div>;
+  return <div className="App"><div className="loading-message"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div></div>;
 }
 
   // 5. ゲーム開始済み ＆ クイズ表示
+  const progressPercentage = ((currentQuestionIndex + 1) / quizData.length) * 100;
+  const timerColor = timeLeft <= 3 ? 'danger' : '';
+
   return (
     <div className="App">
-      <div style={{ textAlign: 'right' }}>
-        <button onClick={handleLogout}>ログアウト</button>
+      <div className="quiz-header">
+        <div className="quiz-info">
+          <div className="info-item">
+            <div className="info-label">問題</div>
+            <div className="info-value">{currentQuestionIndex + 1}/{quizData.length}</div>
+          </div>
+          <div className="info-item score-item">
+            <div className="info-label">スコア</div>
+            <div className="info-value">{score} pt</div>
+          </div>
+          <div className="info-item lives-item">
+            <div className="info-label">残機</div>
+            <div className="info-value">❤️ {lives}</div>
+          </div>
+          <div className="info-item timer-item">
+            <div className="info-label">残り時間</div>
+            <div className={`info-value ${timerColor}`}>{timeLeft}秒</div>
+          </div>
+        </div>
+        <button className="logout-btn" onClick={handleLogout}>ログアウト</button>
       </div>
-      <h1>ITでGo！</h1>
-      {/* 問題番号の表示 */}
-      <p>問題 **{currentQuestionIndex + 1} / {quizData.length}**</p>
-      <p>🎯 スコア: {score} pt</p> {/* ⭐ スコア表示 */}
-      <p>❤️ 残機: {lives}</p> {/* 残機表示 */}
-      {/* ⏱️ タイマー表示 */}
-      <p style={{ 
-        fontSize: '1.2rem', 
-        fontWeight: 'bold',
-        color: timeLeft <= 3 ? '#ff4444' : '#333'
-      }}>
-        ⏱️ 残り時間: {timeLeft} 秒
-      </p>
 
-      {/* データベースから取得した問題文を表示 */}
-      <p className="question-text">{currentQuestion.question}</p>
+      <div className="progress-bar">
+        <div className="progress-fill" style={{ width: `${progressPercentage}%` }}></div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
+      <div className="question-card">
+        <p className="question-text">{currentQuestion.question}</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="answer-form">
         <input
           type="text"
+          className="answer-input"
           value={userAnswer}
           onChange={(e) => setUserAnswer(e.target.value)}
-          placeholder="答えを入力"
+          placeholder="答えを入力してください"
           disabled={result !== null || isTimeUp}
+          autoFocus
         />
-        <button type="submit" disabled={result !== null || isTimeUp}>
+        <button className="submit-button" type="submit" disabled={result !== null || isTimeUp}>
           {result ? '処理中...' : '送信'}
         </button>
       </form>
-      {result && <p className="result-message">{result}</p>}
+
+      {result && (
+        <p className={`result-message ${result.includes('正解') ? 'correct' : result.includes('時間') || result.includes('終了') ? 'neutral' : 'incorrect'}`}>
+          {result}
+        </p>
+      )}
     </div>
   );
 
