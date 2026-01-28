@@ -41,6 +41,8 @@ function App() {
   const [timeLeft, setTimeLeft] = useState(10);
   // タイムアップフラグ
   const [isTimeUp, setIsTimeUp] = useState(false);
+  // ゲーム開始フラグ（ホームページ → クイズへの遷移用）
+  const [gameStarted, setGameStarted] = useState(false);
 
   const currentQuestion = quizData[currentQuestionIndex];
 
@@ -130,9 +132,9 @@ function App() {
   console.log("useEffectが実行されました。現在のtoken:", token);
 
   const fetchQuiz = async () => {
-    // 1. トークンがない場合
-    if (!token) {
-      console.log("トークンがないため、読み込みを終了します。");
+    // 1. トークンがない場合または、ゲームがまだ開始されていない場合
+    if (!token || !gameStarted) {
+      console.log("トークンがないか、ゲームがまだ開始されていないため、読み込みを終了します。");
       setIsLoading(false); // ★ここが重要！ログイン画面を出すためにfalseにする
       return;
     }
@@ -160,7 +162,7 @@ function App() {
   };
 
   fetchQuiz();
-}, [token]);
+}, [token, gameStarted]);
 
   // ⏱️ タイムリミット機能（10秒のカウントダウン）
   useEffect(() => {
@@ -328,17 +330,58 @@ if (!token) {
   );
 }
 
-// 2. ログインしているけれど、データを読み込み中の時
+// 2. ログイン済みだがゲームがまだ開始されていない時（ホームページ）
+if (!gameStarted) {
+  return (
+    <div className="App">
+      <div style={{ textAlign: 'right' }}>
+        <button onClick={handleLogout}>ログアウト</button>
+      </div>
+      <h1>🎓 ITでGo！</h1>
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '40px 20px',
+        backgroundColor: '#f5f5f5',
+        borderRadius: '10px',
+        margin: '20px 0'
+      }}>
+        <p style={{ fontSize: '1.1rem', color: '#333', marginBottom: '20px' }}>
+          クイズ形式でITの勉強ができるアプリです。
+        </p>
+        <p style={{ fontSize: '0.95rem', color: '#666', marginBottom: '30px' }}>
+          10秒で1問に回答します。3回間違えたらゲームオーバーです。
+        </p>
+        <button 
+          onClick={() => setGameStarted(true)}
+          style={{
+            padding: '15px 40px',
+            fontSize: '1.1rem',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          ゲーム開始 🚀
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 3. ゲーム開始済みだが、データを読み込み中の時
 if (isLoading) {
   return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
 }
 
-// 3. ログインしていて、読み込みも終わったが、問題が0件の時
+// 4. ゲーム開始済みで、読み込みも終わったが、問題が0件の時
 if (quizData.length === 0) {
   return <div className="App"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div>;
 }
 
-  // 3. ログイン済み ＆ クイズ表示
+  // 5. ゲーム開始済み ＆ クイズ表示
   return (
     <div className="App">
       <div style={{ textAlign: 'right' }}>
