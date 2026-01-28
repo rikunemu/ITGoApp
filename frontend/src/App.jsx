@@ -121,8 +121,22 @@ function App() {
 //   }
 // };
 
+  // --- ゲームリセット関数 ---
+  const resetGame = () => {
+    setScore(0);
+    setLives(3);
+    setCurrentQuestionIndex(0);
+    setUserAnswer('');
+    setResult(null);
+    setTimeLeft(10);
+    setIsTimeUp(false);
+    setGameStarted(false);
+    setQuizData([]);
+  };
+
   // --- ログアウト処理 ---
   const handleLogout = () => {
+    resetGame();
     localStorage.removeItem('token');
     setToken(null);
   };
@@ -203,6 +217,10 @@ function App() {
       // 3回間違えたら終了
       if (updatedLives <= 0) {
         setResult('💀3問間違えたので終了します💀');
+        // 2秒後にホームページに戻す
+        setTimeout(() => {
+          resetGame();
+        }, 2000);
         return;
       }
 
@@ -213,6 +231,10 @@ function App() {
         setResult(null);
       } else {
         setResult('✨全問終了です！✨');
+        // 2秒後にホームページに戻す
+        setTimeout(() => {
+          resetGame();
+        }, 2000);
       }
     }, 1500);
   };
@@ -246,6 +268,10 @@ function App() {
     // 3回間違えたら終了
     if (updatedLives <= 0) {
       setResult('💀3問間違えたので終了します💀');
+      // 2秒後にホームページに戻す
+      setTimeout(() => {
+        resetGame();
+      }, 2000);
       return;
     }
 
@@ -256,6 +282,10 @@ function App() {
       setResult(null);
     } else {
       setResult('✨全問終了です！✨');
+      // 2秒後にホームページに戻す
+      setTimeout(() => {
+        resetGame();
+      }, 2000);
     }
   }, 1500);
 };
