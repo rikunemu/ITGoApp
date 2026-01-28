@@ -20,18 +20,58 @@ const pool = new Pool({
   database: process.env.DATABASE_NAME || 'dev_db',
 });
 
-// --- 投入するクイズデータの配列 (10問) ---
+// --- 投入するクイズデータの配列 (10問) - 4択形式 ---
 const initialQuizData = [
-  { question: 'Webページを作成するための基本的な言語は何ですか？', answer: 'html' },
-  { question: '変数や関数を定義できるプログラミング言語は何ですか？', answer: 'javascript' },
-  { question: 'Webページの見た目（スタイル）を整えるための言語は何ですか？', answer: 'css' },
-  { question: 'データを格納し、管理するためのシステムを何と呼びますか？', answer: 'データベース' },
-  { question: 'プログラムが期待通りに動作しない原因を見つけ、修正する作業を何と呼びますか？', answer: 'デバッグ' },
-  { question: 'コンピュータ同士を接続し、情報をやり取りするための仕組みを何と呼びますか？', answer: 'ネットワーク' },
-  { question: 'コンピュータの頭脳にあたる部品を、アルファベット3文字で何と呼びますか？', answer: 'cpu' },
-  { question: 'Webサイトの住所にあたるものを何と呼びますか？', answer: 'url' },
-  { question: 'コンピュータを動かすための基本的なソフトウェアを何と呼びますか？', answer: 'os' },
-  { question: 'セキュリティを破ろうとする悪意のある第三者のことを何と呼びますか？', answer: 'ハッカー' }
+  { 
+    question: 'Webページを作成するための基本的な言語は何ですか？', 
+    options: ['HTML', 'Python', 'Java', 'CSS'],
+    correct_answer: 'HTML'
+  },
+  { 
+    question: '変数や関数を定義できるプログラミング言語は何ですか？', 
+    options: ['JavaScript', 'HTML', 'CSS', 'SQL'],
+    correct_answer: 'JavaScript'
+  },
+  { 
+    question: 'Webページの見た目（スタイル）を整えるための言語は何ですか？', 
+    options: ['CSS', 'JavaScript', 'Python', 'Java'],
+    correct_answer: 'CSS'
+  },
+  { 
+    question: 'データを格納し、管理するためのシステムを何と呼びますか？', 
+    options: ['データベース', 'キャッシュ', 'メモリ', 'クラウド'],
+    correct_answer: 'データベース'
+  },
+  { 
+    question: 'プログラムが期待通りに動作しない原因を見つけ、修正する作業を何と呼びますか？', 
+    options: ['デバッグ', 'コンパイル', 'テスト', 'デプロイ'],
+    correct_answer: 'デバッグ'
+  },
+  { 
+    question: 'コンピュータ同士を接続し、情報をやり取りするための仕組みを何と呼びますか？', 
+    options: ['ネットワーク', 'インターネット', 'サーバー', 'クライアント'],
+    correct_answer: 'ネットワーク'
+  },
+  { 
+    question: 'コンピュータの頭脳にあたる部品を、アルファベット3文字で何と呼びますか？', 
+    options: ['CPU', 'GPU', 'RAM', 'SSD'],
+    correct_answer: 'CPU'
+  },
+  { 
+    question: 'Webサイトの住所にあたるものを何と呼びますか？', 
+    options: ['URL', 'IP', 'DNS', 'HTTP'],
+    correct_answer: 'URL'
+  },
+  { 
+    question: 'コンピュータを動かすための基本的なソフトウェアを何と呼びますか？', 
+    options: ['OS', 'アプリ', 'ドライバ', 'ファームウェア'],
+    correct_answer: 'OS'
+  },
+  { 
+    question: 'セキュリティを破ろうとする悪意のある第三者のことを何と呼びますか？', 
+    options: ['ハッカー', 'エンジニア', 'プログラマー', 'デザイナー'],
+    correct_answer: 'ハッカー'
+  }
 ];
 
 
@@ -41,34 +81,34 @@ const initializeDatabase = async () => {
   try {
     client = await pool.connect();
 
-    // 1. テーブル作成 (存在しない場合のみ)
+    // 1. 既存テーブルを削除（開発環境での初期化用）
+    await client.query(`DROP TABLE IF EXISTS questions;`);
+    
+    // 2. テーブル作成
     await client.query(`
       CREATE TABLE IF NOT EXISTS questions (
         id SERIAL PRIMARY KEY,
         question TEXT NOT NULL,
+        options TEXT[] NOT NULL,
         correct_answer VARCHAR(255) NOT NULL
       );
     `);
     
-    // 2. 初期データ投入 (データが空の場合のみ)
-    const countResult = await client.query('SELECT COUNT(*) FROM questions;');
-    if (parseInt(countResult.rows[0].count) === 0) {
-      console.log("データベースに初期データを投入します...");
-      
-      // SQLインジェクションを防ぐため、安全にデータを整形してクエリに含めます
-      const values = initialQuizData.map(q => `('${q.question.replace(/'/g, "''")}', '${q.answer.replace(/'/g, "''")}')`).join(',');
-
-      await client.query(`
-        INSERT INTO questions (question, correct_answer) 
-        VALUES ${values};
-      `);
-      console.log(`初期データ ${initialQuizData.length} 件の投入が完了しました。`);
-    } else {
-      console.log(`データベースには既に ${countResult.rows[0].count} 件のデータが存在します。初期データ投入はスキップしました。`);
+    // 3. 初期データ投入
+    console.log("データベースに初期データを投入します...");
+    
+    for (const q of initialQuizData) {
+      const optionsArray = `{${q.options.map(o => `"${o}"`).join(',')}}`;
+      await client.query(
+        'INSERT INTO questions (question, options, correct_answer) VALUES ($1, $2, $3)',
+        [q.question, optionsArray, q.correct_answer]
+      );
     }
+    console.log(`初期データ ${initialQuizData.length} 件の投入が完了しました。`);
 
   } catch (err) {
     console.error('致命的なデータベース初期化エラー:', err.message);
+    console.error('詳細:', err);
   } finally {
     if (client) {
       client.release();
@@ -83,7 +123,7 @@ const initializeDatabase = async () => {
 app.get('/api/questions', async (req, res) => {
   try {
     // DBから全問題を取得し、フロントエンドにJSON形式で返す
-    const result = await pool.query('SELECT id, question, correct_answer FROM questions ORDER BY id');
+    const result = await pool.query('SELECT id, question, options, correct_answer FROM questions ORDER BY id');
     res.json(result.rows);
   } catch (err) {
     console.error('クイズ取得エラー:', err.message);

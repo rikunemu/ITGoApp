@@ -250,45 +250,49 @@ function App() {
     setIsTimeUp(true);
 
     // 正解の判定（大文字小文字を区別しない、前後の空白を除去）
-        const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
+    const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
   
-  let updatedLives = lives;
+    let updatedLives = lives;
   
-  if (isCorrect) {
-    setResult('正解です！🎉');
-    setScore((prev) => prev + 10);
-  } else {
-    setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
-    updatedLives = lives - 1;
-    setLives(updatedLives);
-  }
-
-  // ⭐ setTimeout はここだけ
-  setTimeout(() => {
-    // 3回間違えたら終了
-    if (updatedLives <= 0) {
-      setResult('💀3問間違えたので終了します💀');
-      // 2秒後にホームページに戻す
-      setTimeout(() => {
-        resetGame();
-      }, 2000);
-      return;
-    }
-
-    // 次の問題へ
-    if (currentQuestionIndex < quizData.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setUserAnswer('');
-      setResult(null);
+    if (isCorrect) {
+      setResult('正解です！🎉');
+      setScore((prev) => prev + 10);
     } else {
-      setResult('✨全問終了です！✨');
-      // 2秒後にホームページに戻す
-      setTimeout(() => {
-        resetGame();
-      }, 2000);
+      setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+      updatedLives = lives - 1;
+      setLives(updatedLives);
     }
-  }, 1500);
-};
+
+    // setTimeout はここだけ
+    setTimeout(() => {
+      // 3回間違えたら終了
+      if (updatedLives <= 0) {
+        setResult('💀3問間違えたので終了します💀');
+        // 2秒後にホームページに戻す
+        setTimeout(() => {
+          resetGame();
+        }, 2000);
+        return;
+      }
+
+      // 次の問題へ
+      if (currentQuestionIndex < quizData.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setUserAnswer('');
+        setResult(null);
+      } else {
+        setResult('✨全問終了です！✨');
+        // 2秒後にホームページに戻す
+        setTimeout(() => {
+          resetGame();
+        }, 2000);
+      }
+    }, 1500);
+  };
+
+  const handleOptionClick = (option) => {
+    setUserAnswer(option);
+  };
 
   //   if (isCorrect) {
   //     setResult('正解です！🎉');
@@ -425,20 +429,27 @@ if (quizData.length === 0) {
         <p className="question-text">{currentQuestion.question}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="answer-form">
-        <input
-          type="text"
-          className="answer-input"
-          value={userAnswer}
-          onChange={(e) => setUserAnswer(e.target.value)}
-          placeholder="答えを入力してください"
-          disabled={result !== null || isTimeUp}
-          autoFocus
-        />
-        <button className="submit-button" type="submit" disabled={result !== null || isTimeUp}>
-          {result ? '処理中...' : '送信'}
-        </button>
-      </form>
+      <div className="options-container">
+        {currentQuestion.options && currentQuestion.options.map((option, index) => (
+          <button
+            key={index}
+            className={`option-button ${userAnswer === option ? 'selected' : ''} ${result !== null ? 'disabled' : ''}`}
+            onClick={() => handleOptionClick(option)}
+            disabled={result !== null || isTimeUp}
+          >
+            {String.fromCharCode(65 + index)}. {option}
+          </button>
+        ))}
+      </div>
+
+      <button 
+        className="submit-button" 
+        onClick={handleSubmit}
+        disabled={result !== null || isTimeUp || !userAnswer}
+        style={{ width: '100%', marginTop: '20px' }}
+      >
+        {result ? '処理中...' : '回答する'}
+      </button>
 
       {result && (
         <p className={`result-message ${result.includes('正解') ? 'correct' : result.includes('時間') || result.includes('終了') ? 'neutral' : 'incorrect'}`}>
