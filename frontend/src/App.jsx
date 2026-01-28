@@ -5,6 +5,8 @@ import './App.css';
 const API_URL = 'http://localhost:3001/api/questions';
 // ログイン画面のURL(ログインしているかどうかでクイズ画面とのだし分けを行う。今は未実装)
 const LOGIN_URL = 'http://localhost:3001/api/login';
+// ローカルストレージのキー
+const RANKING_KEY = 'quiz_ranking_data';
 
 // ランダム出題
 // 配列のシャッフル（Fisher–Yates）
@@ -21,7 +23,7 @@ function App() {
   // --- 状態管理 (ログイン関連) ---
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState(''); 
+  const [password, setPassword] = useState('');
 
   // 取得した全問題リスト
   const [quizData, setQuizData] = useState([]);
@@ -33,10 +35,32 @@ function App() {
   const [result, setResult] = useState(null);
   // データ取得中かどうか
   const [isLoading, setIsLoading] = useState(true);
-  // ⭐ スコア管理用
-  const [score, setScore] = useState(0); 
+  // スコア管理用
+  const [score, setScore] = useState(0);
   // 残機機能（3つ間違えたら終了）
   const [lives, setLives] = useState(3);
+
+  // ランキング関連の状態
+  //const [isFinished, setIsFinished] = useState(false);
+  const [ranking, setRanking] = useState([]);
+
+  const [screenMode, setScreenMode] = useState('quiz'); // 'quiz', 'nameInput', 'ranking'
+  const [inputName, setInputName] = useState('');
+
+  // スコアを保存してランキングを表示する関数
+  // const finishGame = (finalScore) => {
+  //   // 1. 既存のランキングを取得
+  //   const prevRanking = JSON.parse(localStorage.getItem(RANKING_KEY)) || [];
+  //   // 2. 新しいスコアを追加してソート（降順）し、上位5件を保持
+  //   const newRanking = [...prevRanking, finalScore]
+  //     .sort((a, b) => b - a)
+  //     .slice(0, 5);
+
+  //   // 3. ローカルストレージと状態を更新
+  //   localStorage.setItem(RANKING_KEY, JSON.stringify(newRanking));
+  //   setRanking(newRanking);
+  //   setIsFinished(true);
+  // };
 
   const currentQuestion = quizData[currentQuestionIndex];
 
@@ -83,38 +107,6 @@ function App() {
     }
   };
 
-//   // --- ログイン処理 ---
-// const handleLogin = async (e) => {
-//   e.preventDefault();
-//   console.log("ログインボタンが押されました"); // ← 1. これが出るか？
-
-//   try {
-//     console.log("サーバーへ通信を開始します...", { email, password }); // ← 2. これが出るか？
-    
-//     const response = await fetch(LOGIN_URL, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ email, password }),
-//     });
-
-//     console.log("サーバーから応答がありました:", response.status); // ← 3. ステータスコードを確認
-
-//     const data = await response.json();
-    
-//     if (response.ok) {
-//       console.log("ログイン成功！トークン:", data.token);
-//       localStorage.setItem('token', data.token);
-//       setToken(data.token);
-//     } else {
-//       console.error("ログイン失敗:", data.error);
-//       alert(data.error);
-//     }
-//   } catch (error) {
-//     console.error("通信エラーが発生しました:", error); // ← 4. ネットワークエラーなど
-//     alert("サーバーに接続できませんでした");
-//   }
-// };
-
   // --- ログアウト処理 ---
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -123,180 +115,183 @@ function App() {
 
   // --- データ取得 ---
   useEffect(() => {
-  console.log("useEffectが実行されました。現在のtoken:", token);
+    console.log("useEffectが実行されました。現在のtoken:", token);
 
-  const fetchQuiz = async () => {
-    // 1. トークンがない場合
-    if (!token) {
-      console.log("トークンがないため、読み込みを終了します。");
-      setIsLoading(false); // ★ここが重要！ログイン画面を出すためにfalseにする
-      return;
-    }
-
-    // 2. トークンがある場合、データを取得
-    try {
-      console.log("APIからデータを取得します...");
-      const response = await fetch(API_URL);
-      
-      if (!response.ok) {
-        throw new Error(`サーバーエラー: ${response.status}`);
+    const fetchQuiz = async () => {
+      // 1. トークンがない場合
+      if (!token) {
+        console.log("トークンがないため、読み込みを終了します。");
+        setIsLoading(false); // ★ここが重要！ログイン画面を出すためにfalseにする
+        return;
       }
 
-      const data = await response.json();
-      console.log("取得データ:", data);
-      console.log(data)
-      setQuizData(shuffleArray(data));
-    } catch (err) {
-      console.error("フェッチエラー:", err);
-      setResult("データの取得に失敗しました。");
-    } finally {
-      console.log("読み込み完了（setIsLoading(false)を実行）");
-      setIsLoading(false); // 成功しても失敗しても必ず実行
-    }
-  };
+      // 2. トークンがある場合、データを取得
+      try {
+        console.log("APIからデータを取得します...");
+        const response = await fetch(API_URL);
 
-  fetchQuiz();
-}, [token]);
-  // useEffect(() => {
-  //   if (!token) return; // ログインしてない時は取得しない
-    
-  //   const fetchQuiz = async () => {
-  //     try {
-  //       const response = await fetch(API_URL);
-  //       if (!response.ok) {
-  //         throw new Error('APIからデータを取得できませんでした。');
-  //       }
-  //       const data = await response.json();
-  //       setQuizData(data);
-  //     } catch (error) {
-  //       console.error("クイズデータ取得失敗:", error);
-  //       setResult('データの読み込みに失敗しました。バックエンドが起動しているか確認してください。');
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   fetchQuiz();
-  // }, [token]); // tokenが変わったら（ログインしたら）実行
+        if (!response.ok) {
+          throw new Error(`サーバーエラー: ${response.status}`);
+        }
 
-  // const currentQuestion = quizData[currentQuestionIndex];
+        const data = await response.json();
+        console.log("取得データ:", data);
+        console.log(data)
+        setQuizData(shuffleArray(data));
+      } catch (err) {
+        console.error("フェッチエラー:", err);
+        setResult("データの取得に失敗しました。");
+      } finally {
+        console.log("読み込み完了（setIsLoading(false)を実行）");
+        setIsLoading(false); // 成功しても失敗しても必ず実行
+      }
+    };
+
+    fetchQuiz();
+  }, [token]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!currentQuestion) return; 
+    if (!currentQuestion) return;
 
     // 正解の判定（大文字小文字を区別しない、前後の空白を除去）
-        const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
-  
-  let updatedLives = lives;
-  
-  if (isCorrect) {
-    setResult('正解です！🎉');
-    setScore((prev) => prev + 10);
-  } else {
-    setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
-    updatedLives = lives - 1;
-    setLives(updatedLives);
-  }
+    const isCorrect = userAnswer.trim().toLowerCase() === currentQuestion.correct_answer.toLowerCase();
 
-  // ⭐ setTimeout はここだけ
-  setTimeout(() => {
-    // 3回間違えたら終了
-    if (updatedLives <= 0) {
-      setResult('💀3問間違えたので終了します💀');
-      return;
+    let updatedLives = lives;
+    //let updatedScore = score;
+
+    if (isCorrect) {
+      setResult('正解です！🎉');
+      setScore((prev) => prev + 10);
+    } else {
+      setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
+      updatedLives = lives - 1;
+      setLives(updatedLives);
     }
 
-    // 次の問題へ
-    if (currentQuestionIndex < quizData.length - 1) {
+    // ⭐ setTimeout はここだけ
+    setTimeout(() => {
+      // 💀 ゲームオーバー または ✨ 全問終了
+      if (updatedLives <= 0 || currentQuestionIndex >= quizData.length - 1) {
+        setScreenMode('nameInput'); // 名前入力画面へ
+        return;
+      }
+      // 次の問題へ
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setUserAnswer('');
       setResult(null);
-    } else {
-      setResult('✨全問終了です！✨');
-    }
-  }, 1500);
-};
+    }, 1500);
+  };
 
-  //   if (isCorrect) {
-  //     setResult('正解です！🎉');
-  //     setScore((prev) => prev + 10); // ⭐ 正解時に10pt加算
-  //   } else {
-  //     setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
-  //     // 不正解時にLivesを減らす
-  //     setLives((prev) => prev - 1);
-  //   }
+  // ランキングに登録する関数
+  const registerRanking = (e) => {
+    e.preventDefault();
+    const finalName = inputName.trim() || "名無しさん";
 
-  //   // 1.5秒後に次の問題へ進む（または終了）
-  //   setTimeout(() => {
-  //     if(lives === 0){
-  //       setResult('💀3問間違えたので終了します💀');
-  //     }else if(currentQuestionIndex < quizData.length - 1) {
-  //       setCurrentQuestionIndex(currentQuestionIndex + 1);
-  //       setUserAnswer('');
-  //       setResult(null);
-  //     } else {
-  //       // 全問終了後の処理
-  //       setResult('✨全問終了です！✨');
-  //       //setScore(0); // ⭐ 全問終了時にスコアリセット
-  //     }
-  //   }, 1500);
-  // };
+    const prevRanking = JSON.parse(localStorage.getItem(RANKING_KEY)) || [];
+    const newEntry = { name: finalName, score: score };
+    const newRanking = [...prevRanking, newEntry]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
 
-  // if (isLoading) {
-  //   return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
-  // }
+    localStorage.setItem(RANKING_KEY, JSON.stringify(newRanking));
+    setRanking(newRanking);
+    setScreenMode('ranking'); // ランキング表示へ
+  };
 
-  // if (quizData.length === 0 && !isLoading) {
-  //    return <div className="App"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div>;
-  // }
-  
   // クイズの表示
 
   // --- 表示の切り分け ---
 
   // 1. ログインしていない時
-if (!token) {
-  return (
-    <div className="App">
-      <h1>ITでGo！ - ログイン</h1>
-      <form onSubmit={handleLogin}>
-        <div>
-          <input 
-            type="email" 
-            placeholder="メールアドレス" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-          />
-        </div>
-        <div>
-          <input 
-            type="password" 
-            placeholder="パスワード" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-          />
-        </div>
-        <button type="submit">ログイン</button>
-      </form>
-      <p style={{fontSize: '0.8rem', color: '#666'}}>
-        ※テスト用: test@example.com / password123
-      </p>
-    </div>
-  );
-}
+  if (!token) {
+    return (
+      <div className="App">
+        <h1>ITでGo！ - ログイン</h1>
+        <form onSubmit={handleLogin}>
+          <div>
+            <input
+              type="email"
+              placeholder="メールアドレス"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="パスワード"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit">ログイン</button>
+        </form>
+        <p style={{ fontSize: '0.8rem', color: '#666' }}>
+          ※テスト用: test@example.com / password123
+        </p>
+      </div>
+    );
+  }
 
-// 2. ログインしているけれど、データを読み込み中の時
-if (isLoading) {
-  return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
-}
+  //2. ログインしているけれど、データを読み込み中の時
+  if (isLoading) {
+    return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
+  }
 
-// 3. ログインしていて、読み込みも終わったが、問題が0件の時
-if (quizData.length === 0) {
-  return <div className="App"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div>;
-}
+  // 3. ログインしていて、読み込みも終わったが、問題が0件の時
+  if (quizData.length === 0) {
+    return <div className="App"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div>;
+  }
+
+  // 1. 名前入力画面
+  if (screenMode === 'nameInput') {
+    return (
+      <div className="App">
+        <h1>ゲーム終了！</h1>
+        <p>あなたのスコア: {score} pt</p>
+        <form onSubmit={registerRanking}>
+          <p>ランキングに登録する名前を入力してください</p>
+          <input
+            type="text"
+            value={inputName}
+            onChange={(e) => setInputName(e.target.value)}
+            placeholder="名前を入力"
+            required
+            autoFocus
+          />
+          <button type="submit">ランキングを見る</button>
+        </form>
+      </div>
+    );
+  }
+
+  // 2. ランキング表示画面
+  if (screenMode === 'ranking') {
+    return (
+      <div className="ranking-container">
+        <h1 className="ranking-title">🏆 TOP RANKERS</h1>
+        <div className="current-player-card">
+          <p>YOUR SCORE: <span className="highlight">{score}</span> pt</p>
+        </div>
+        <div className="ranking-board">
+          {ranking.map((entry, index) => (
+            <div key={index} className={`ranking-item rank-${index + 1}`}>
+              <span className="rank-number">{index + 1}</span>
+              <span className="rank-name">{entry.name}</span>
+              <span className="rank-score">{entry.score} pt</span>
+            </div>
+          ))}
+        </div>
+        <button className="retry-button" onClick={() => window.location.reload()}>
+          PLAY AGAIN
+        </button>
+      </div>
+    );
+  }
 
   // 3. ログイン済み ＆ クイズ表示
   return (
@@ -327,32 +322,6 @@ if (quizData.length === 0) {
       {result && <p className="result-message">{result}</p>}
     </div>
   );
-
-  // return (
-  //   <div className="App">
-  //     <h1>ITでGo！</h1>
-  //     {/* 問題番号の表示 */}
-  //     <p>問題 **{currentQuestionIndex + 1} / {quizData.length}**</p>
-
-  //     {/* データベースから取得した問題文を表示 */}
-  //     <p className="question-text">{currentQuestion.question}</p>
-
-  //     <form onSubmit={handleSubmit}>
-  //       <input
-  //         type="text"
-  //         value={userAnswer}
-  //         onChange={(e) => setUserAnswer(e.target.value)}
-  //         placeholder="答えを入力"
-  //         disabled={result !== null}
-  //       />
-  //       <button type="submit" disabled={result !== null}>
-  //         {result ? '処理中...' : '送信'}
-  //       </button>
-  //     </form>
-  //     {/* CSSでスタイルを適用するためのクラスを追加 */}
-  //     {result && <p className={`result-message ${result.includes('正解') ? 'correct' : 'incorrect'}`}>{result}</p>}
-  //   </div>
-  // );
 }
 
 export default App;
