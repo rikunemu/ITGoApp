@@ -21,7 +21,11 @@ function App() {
   // --- 状態管理 (ログイン関連) ---
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState(''); 
+  const [password, setPassword] = useState('');
+  // 登録フォーム用
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [registerMessage, setRegisterMessage] = useState(''); 
 
   // 取得した全問題リスト
   const [quizData, setQuizData] = useState([]);
@@ -87,6 +91,55 @@ function App() {
         alert("サーバーから応答がありません（タイムアウト）");
       } else {
         alert("通信エラー: " + error.message);
+      }
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    console.log("--- 新規登録処理開始 ---");
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(LOGIN_URL.replace('/login', '/register'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email, 
+          password,
+          passwordConfirm
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      const data = await response.json();
+      console.log("サーバーからのデータ:", data);
+
+      if (!response.ok) {
+        setRegisterMessage(data.error || '登録に失敗しました');
+        return;
+      }
+
+      setRegisterMessage('登録完了しました！ログイン画面に切り替わります。');
+      setEmail('');
+      setPassword('');
+      setPasswordConfirm('');
+      
+      // 1秒後にログイン画面に戻す
+      setTimeout(() => {
+        setIsRegistering(false);
+        setRegisterMessage('');
+      }, 2000);
+
+    } catch (error) {
+      console.error("❌ Fetchエラーの詳細:", error.name, error.message);
+      if (error.name === 'AbortError') {
+        setRegisterMessage("サーバーから応答がありません（タイムアウト）");
+      } else {
+        setRegisterMessage("通信エラー: " + error.message);
       }
     }
   };
@@ -335,35 +388,117 @@ function App() {
 
   // 1. ログインしていない時
 if (!token) {
-  return (
-    <div className="App">
-      <h1>ITでGo！ - ログイン</h1>
-      <form onSubmit={handleLogin}>
-        <div>
-          <input 
-            type="email" 
-            placeholder="メールアドレス" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-          />
-        </div>
-        <div>
-          <input 
-            type="password" 
-            placeholder="パスワード" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-          />
-        </div>
-        <button type="submit">ログイン</button>
-      </form>
-      <p style={{fontSize: '0.8rem', color: '#666'}}>
-        ※テスト用: test@example.com / password123
-      </p>
-    </div>
-  );
+  if (isRegistering) {
+    // 新規登録画面
+    return (
+      <div className="App">
+        <h1>ITでGo！ - 新規登録</h1>
+        <form onSubmit={handleRegister}>
+          <div>
+            <input 
+              type="email" 
+              placeholder="メールアドレス" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+            />
+          </div>
+          <div>
+            <input 
+              type="password" 
+              placeholder="パスワード（6文字以上）" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
+          </div>
+          <div>
+            <input 
+              type="password" 
+              placeholder="パスワード確認" 
+              value={passwordConfirm} 
+              onChange={(e) => setPasswordConfirm(e.target.value)} 
+              required 
+            />
+          </div>
+          <button type="submit">登録する</button>
+        </form>
+        {registerMessage && (
+          <p style={{
+            marginTop: '15px',
+            padding: '10px',
+            borderRadius: '5px',
+            backgroundColor: registerMessage.includes('完了') ? '#e8f5e9' : '#ffebee',
+            color: registerMessage.includes('完了') ? '#2e7d32' : '#c62828'
+          }}>
+            {registerMessage}
+          </p>
+        )}
+        <p style={{fontSize: '0.85rem', color: '#666', marginTop: '15px'}}>
+          ログイン済みの方は
+          <button 
+            type="button"
+            onClick={() => setIsRegistering(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#667eea',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontSize: '0.85rem'
+            }}
+          >
+            こちら
+          </button>
+        </p>
+      </div>
+    );
+  } else {
+    // ログイン画面
+    return (
+      <div className="App">
+        <h1>ITでGo！ - ログイン</h1>
+        <form onSubmit={handleLogin}>
+          <div>
+            <input 
+              type="email" 
+              placeholder="メールアドレス" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+            />
+          </div>
+          <div>
+            <input 
+              type="password" 
+              placeholder="パスワード" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
+          </div>
+          <button type="submit">ログイン</button>
+        </form>
+        <p style={{fontSize: '0.85rem', color: '#666', marginTop: '15px'}}>
+          新規会員登録は
+          <button 
+            type="button"
+            onClick={() => setIsRegistering(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#667eea',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontSize: '0.85rem'
+            }}
+          >
+            こちら
+          </button>
+        </p>
+      </div>
+    );
+  }
 }
 
 // 2. ログイン済みだがゲームモードがまだ選択されていない時（モード選択画面）

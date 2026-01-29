@@ -18,8 +18,10 @@ services:
       DATABASE_USER: user
       DATABASE_PASSWORD: password
       DATABASE_NAME: dev_db
+      NODE_ENV: development
     depends_on:
-      - db # dbコンテナが起動してからappコンテナを起動するように依存関係を設定
+      db:
+        condition: service_healthy  # DBが正常になるまで待機
 
   # 2. PostgreSQL データベースコンテナの定義
   db:
@@ -31,12 +33,41 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: dev_db
+      POSTGRES_INITDB_ARGS: "--locale=ja_JP.UTF-8"
     volumes:
       # データを永続化するためのボリューム
       - db-data:/var/lib/postgresql/data
+      # initdbスクリプトをマウント（起動時に自動実行）
+      - ./migrations:/docker-entrypoint-initdb.d/migrations:ro
+      - ./seeds:/docker-entrypoint-initdb.d/seeds:ro
     ports:
       # ホストマシンの5432ポートをコンテナの5432ポートに転送
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d dev_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. マイグレーション実行用ジョブコンテナ
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../backend:/app:ro
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: user
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: dev_db
+    working_dir: /app
+    command: sh -c "npm install --omit=dev && npm run migrate"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   # データベースのデータ保存用ボリューム
