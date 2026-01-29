@@ -43,6 +43,8 @@ function App() {
   const [isTimeUp, setIsTimeUp] = useState(false);
   // ゲーム開始フラグ（ホームページ → クイズへの遷移用）
   const [gameStarted, setGameStarted] = useState(false);
+  // ゲームモード（itpassport, basic, applied）
+  const [gameMode, setGameMode] = useState(null);
 
   const currentQuestion = quizData[currentQuestionIndex];
 
@@ -131,6 +133,7 @@ function App() {
     setTimeLeft(10);
     setIsTimeUp(false);
     setGameStarted(false);
+    setGameMode(null);
     setQuizData([]);
   };
 
@@ -143,20 +146,20 @@ function App() {
 
   // --- データ取得 ---
   useEffect(() => {
-  console.log("useEffectが実行されました。現在のtoken:", token);
+  console.log("useEffectが実行されました。現在のtoken:", token, "gameMode:", gameMode);
 
   const fetchQuiz = async () => {
-    // 1. トークンがない場合または、ゲームがまだ開始されていない場合
-    if (!token || !gameStarted) {
-      console.log("トークンがないか、ゲームがまだ開始されていないため、読み込みを終了します。");
-      setIsLoading(false); // ★ここが重要！ログイン画面を出すためにfalseにする
+    // 1. トークンがない場合または、ゲームモードがまだ選択されていない場合
+    if (!token || !gameMode) {
+      console.log("トークンがないか、ゲームモードがまだ選択されていないため、読み込みを終了します。");
+      setIsLoading(false);
       return;
     }
 
     // 2. トークンがある場合、データを取得
     try {
-      console.log("APIからデータを取得します...");
-      const response = await fetch(API_URL);
+      console.log("APIからデータを取得します（モード: ${gameMode}）...");
+      const response = await fetch(`${API_URL}?mode=${gameMode}`);
       
       if (!response.ok) {
         throw new Error(`サーバーエラー: ${response.status}`);
@@ -164,19 +167,18 @@ function App() {
 
       const data = await response.json();
       console.log("取得データ:", data);
-      console.log(data)
       setQuizData(shuffleArray(data));
     } catch (err) {
       console.error("フェッチエラー:", err);
       setResult("データの取得に失敗しました。");
     } finally {
       console.log("読み込み完了（setIsLoading(false)を実行）");
-      setIsLoading(false); // 成功しても失敗しても必ず実行
+      setIsLoading(false);
     }
   };
 
   fetchQuiz();
-}, [token, gameStarted]);
+}, [token, gameMode]);
 
   // ⏱️ タイムリミット機能（10秒のカウントダウン）
   useEffect(() => {
@@ -364,8 +366,8 @@ if (!token) {
   );
 }
 
-// 2. ログイン済みだがゲームがまだ開始されていない時（ホームページ）
-if (!gameStarted) {
+// 2. ログイン済みだがゲームモードがまだ選択されていない時（モード選択画面）
+if (!gameMode) {
   return (
     <div className="App">
       <div className="home-header">
@@ -373,11 +375,39 @@ if (!gameStarted) {
         <button className="logout-btn" onClick={handleLogout}>ログアウト</button>
       </div>
       <div className="home-content">
-        <p>クイズ形式でITの勉強ができるアプリです。</p>
-        <p>10秒で1問に回答します。3回間違えたらゲームオーバーです。</p>
-        <button className="start-button" onClick={() => setGameStarted(true)}>
-          ゲーム開始 🚀
-        </button>
+        <p>学習する試験を選択してください</p>
+        <div className="modes-container">
+          <button 
+            className="mode-button itpassport-btn"
+            onClick={() => {
+              setGameMode('itpassport');
+              setGameStarted(true);
+            }}
+          >
+            <div className="mode-title">🎫 ITパスポート</div>
+            <div className="mode-description">IT基礎知識試験</div>
+          </button>
+          <button 
+            className="mode-button basic-btn"
+            onClick={() => {
+              setGameMode('basic');
+              setGameStarted(true);
+            }}
+          >
+            <div className="mode-title">💼 基本情報技術者試験</div>
+            <div className="mode-description">IT専門知識試験</div>
+          </button>
+          <button 
+            className="mode-button applied-btn"
+            onClick={() => {
+              setGameMode('applied');
+              setGameStarted(true);
+            }}
+          >
+            <div className="mode-title">🚀 応用情報技術者試験</div>
+            <div className="mode-description">高度なIT技術試験</div>
+          </button>
+        </div>
       </div>
     </div>
   );

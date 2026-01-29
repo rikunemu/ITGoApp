@@ -171,6 +171,66 @@ body {
   transform: translateY(-1px);
 }
 
+/* ===== モード選択ボタン ===== */
+.modes-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.mode-button {
+  padding: 25px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  font-weight: bold;
+  color: white;
+}
+
+.mode-title {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.mode-description {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.itpassport-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.basic-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.applied-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.mode-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.mode-button:active {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+  .mode-title {
+    font-size: 1rem;
+  }
+
+  .mode-description {
+    font-size: 0.75rem;
+  }
+}
+
 /* ===== クイズ画面 ===== */
 .quiz-header {
   display: flex;
