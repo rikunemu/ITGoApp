@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const port = 3001; 
@@ -80,83 +81,103 @@ app.get('/api/questions', async (req, res) => {
 });
 
 // ログインエンドポイント
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
-  // 入力値の検証
   if (!email || !password) {
     return res.status(400).json({ error: 'メールアドレスとパスワードが必要です' });
   }
 
-  // 簡易的な認証（本番環境ではデータベースから取得し、パスワードハッシュで検証）
-  pool.query('SELECT * FROM users WHERE email = $1', [email], (err, result) => {
-    if (err) {
-      console.error('ログインエラー:', err);
-      return res.status(500).json({ error: 'サーバーエラー' });
-    }
-
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'メールアドレスまたはパスワードが違います' });
     }
 
     const user = result.rows[0];
-    // 本番環境ではbcryptなどでハッシュ検証すること
-    if (user.password !== password) {
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
       return res.status(401).json({ error: 'メールアドレスまたはパスワードが違います' });
     }
 
-    // ログイン成功
-    res.json({ 
+    res.json({
       token: `user-${user.id}-token`,
       email: user.email
     });
-  });
+  } catch (err) {
+    console.error('ログインエラー:', err);
+    res.status(500).json({ error: 'サーバーエラー' });
+  }
 });
 
 // 新規登録エンドポイント
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { email, password, passwordConfirm } = req.body;
 
-  // 入力値の検証
   if (!email || !password || !passwordConfirm) {
     return res.status(400).json({ error: '全ての項目を入力してください' });
   }
 
-  // メールアドレスの形式チェック
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ error: '有効なメールアドレスを入力してください' });
   }
 
-  // パスワードの長さチェック
   if (password.length < 6) {
     return res.status(400).json({ error: 'パスワードは6文字以上である必要があります' });
   }
 
-  // パスワード確認
   if (password !== passwordConfirm) {
     return res.status(400).json({ error: 'パスワードが一致しません' });
   }
 
-  // ユーザー登録
-  pool.query(
-    'INSERT INTO users (email, password) VALUES ($1, $2)',
-    [email, password],
-    (err) => {
-      if (err) {
-        if (err.code === '23505') { // ユニーク制約違反
-          return res.status(400).json({ error: 'このメールアドレスは既に登録されています' });
-        }
-        console.error('登録エラー:', err);
-        return res.status(500).json({ error: 'サーバーエラー' });
-      }
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    // フロントから `username` が送られていない場合は、メールアドレスの@より前を既定のユーザー名とする
+    const username = req.body.username || (email.split('@')[0]);
 
-      res.status(201).json({ 
-        message: '登録が完了しました',
-        email: email
-      });
+    // 利用可能なカラムを検出して、存在するカラムへ挿入する
+    const colsRes = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'");
+    const colSet = new Set(colsRes.rows.map(r => r.column_name));
+
+    // 必要に応じてカラムを追加する（安全策）
+    if (!colSet.has('password') && !colSet.has('password_hash')) {
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);");
+      colSet.add('password_hash');
     }
-  );
+    if (!colSet.has('username')) {
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(255);");
+      colSet.add('username');
+    }
+
+    const insertCols = ['email'];
+    const values = [email];
+
+    if (colSet.has('password')) {
+      insertCols.push('password');
+      values.push(hashed);
+    }
+    if (colSet.has('password_hash')) {
+      insertCols.push('password_hash');
+      values.push(hashed);
+    }
+    if (colSet.has('username')) {
+      insertCols.push('username');
+      values.push(username);
+    }
+
+    const placeholders = insertCols.map((_, i) => `$${i + 1}`).join(', ');
+    const sql = `INSERT INTO users (${insertCols.join(',')}) VALUES (${placeholders})`;
+    await pool.query(sql, values);
+
+    res.status(201).json({ message: '登録が完了しました', email: email });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ error: 'このメールアドレスは既に登録されています' });
+    }
+    console.error('登録エラー:', err);
+    res.status(500).json({ error: 'サーバーエラー' });
+  }
 });
 
 // --- サーバー起動 ---

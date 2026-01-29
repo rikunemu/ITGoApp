@@ -38,8 +38,8 @@ services:
       # データを永続化するためのボリューム
       - db-data:/var/lib/postgresql/data
       # initdbスクリプトをマウント（起動時に自動実行）
-      - ./migrations:/docker-entrypoint-initdb.d/migrations:ro
-      - ./seeds:/docker-entrypoint-initdb.d/seeds:ro
+      # Postgresは /docker-entrypoint-initdb.d 配下のファイルを実行するため、直接マウントする
+      - ./migrations:/docker-entrypoint-initdb.d:ro
     ports:
       # ホストマシンの5432ポートをコンテナの5432ポートに転送
       - "5432:5432"
