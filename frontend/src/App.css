@@ -518,3 +518,148 @@ body {
   }
 }
 
+/* ===== ランキング画面 ===== */
+.ranking-container {
+  width: 100%;
+  max-width: 600px;
+  padding: 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.ranking-title {
+  color: #667eea;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.current-player-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  font-size: 1.2rem;
+}
+
+.current-player-card .highlight {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.ranking-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.rank-number {
+  font-size: 1.5rem;
+  color: #667eea;
+  min-width: 40px;
+  text-align: center;
+}
+
+.rank-name {
+  flex: 1;
+  text-align: left;
+  color: #333;
+  padding: 0 20px;
+}
+
+.rank-score {
+  color: #764ba2;
+  min-width: 80px;
+  text-align: right;
+}
+
+.rank-1 {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.rank-1 .rank-number,
+.rank-1 .rank-score {
+  color: #d4af37;
+  font-size: 1.3rem;
+}
+
+.rank-2 {
+  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+  box-shadow: 0 4px 15px rgba(192, 192, 192, 0.3);
+}
+
+.rank-2 .rank-number,
+.rank-2 .rank-score {
+  color: #696969;
+  font-size: 1.2rem;
+}
+
+.rank-3 {
+  background: linear-gradient(135deg, #cd7f32 0%, #e8a76a 100%);
+  box-shadow: 0 4px 15px rgba(205, 127, 50, 0.3);
+}
+
+.rank-3 .rank-number,
+.rank-3 .rank-score {
+  color: #8b4513;
+  font-size: 1.2rem;
+}
+
+.retry-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 300px;
+}
+
+.retry-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 600px) {
+  .ranking-container {
+    padding: 15px;
+  }
+
+  .ranking-title {
+    font-size: 1.5rem;
+  }
+
+  .ranking-item {
+    font-size: 1rem;
+    padding: 12px;
+  }
+
+  .rank-number {
+    min-width: 30px;
+  }
+
+  .rank-score {
+    min-width: 70px;
+  }
+}
+

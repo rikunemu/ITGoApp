@@ -5,6 +5,8 @@ import './App.css';
 const API_URL = 'http://localhost:3001/api/questions';
 // ログイン画面のURL(ログインしているかどうかでクイズ画面とのだし分けを行う。今は未実装)
 const LOGIN_URL = 'http://localhost:3001/api/login';
+// ローカルストレージのキー
+const RANKING_KEY = 'quiz_ranking_data';
 
 // ランダム出題
 // 配列のシャッフル（Fisher–Yates）
@@ -50,7 +52,10 @@ function App() {
   // ゲームモード（itpassport, basic, applied）
   const [gameMode, setGameMode] = useState(null);
 
-  const currentQuestion = quizData[currentQuestionIndex];
+  // ランキング関連の状態
+  const [ranking, setRanking] = useState([]);
+  const [screenMode, setScreenMode] = useState('quiz'); // 'quiz', 'nameInput', 'ranking'
+  const [inputName, setInputName] = useState('');
 
 
   const handleLogin = async (e) => {
@@ -188,6 +193,8 @@ function App() {
     setGameStarted(false);
     setGameMode(null);
     setQuizData([]);
+    setScreenMode('quiz');
+    setInputName('');
   };
 
   // --- ログアウト処理 ---
@@ -195,6 +202,22 @@ function App() {
     resetGame();
     localStorage.removeItem('token');
     setToken(null);
+  };
+
+  // ランキングに登録する関数
+  const registerRanking = (e) => {
+    e.preventDefault();
+    const finalName = inputName.trim() || "名無しさん";
+
+    const prevRanking = JSON.parse(localStorage.getItem(RANKING_KEY)) || [];
+    const newEntry = { name: finalName, score: score };
+    const newRanking = [...prevRanking, newEntry]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    localStorage.setItem(RANKING_KEY, JSON.stringify(newRanking));
+    setRanking(newRanking);
+    setScreenMode('ranking'); // ランキング表示へ
   };
 
   // --- データ取得 ---
@@ -272,9 +295,9 @@ function App() {
       // 3回間違えたら終了
       if (updatedLives <= 0) {
         setResult('💀3問間違えたので終了します💀');
-        // 2秒後にホームページに戻す
+        // 2秒後にランキング画面へ
         setTimeout(() => {
-          resetGame();
+          setScreenMode('nameInput');
         }, 2000);
         return;
       }
@@ -286,9 +309,9 @@ function App() {
         setResult(null);
       } else {
         setResult('✨全問終了です！✨');
-        // 2秒後にホームページに戻す
+        // 2秒後にランキング画面へ
         setTimeout(() => {
-          resetGame();
+          setScreenMode('nameInput');
         }, 2000);
       }
     }, 1500);
@@ -320,13 +343,9 @@ function App() {
 
     // setTimeout はここだけ
     setTimeout(() => {
-      // 3回間違えたら終了
-      if (updatedLives <= 0) {
-        setResult('💀3問間違えたので終了します💀');
-        // 2秒後にホームページに戻す
-        setTimeout(() => {
-          resetGame();
-        }, 2000);
+      // ゲームオーバーまたは全問終了
+      if (updatedLives <= 0 || currentQuestionIndex >= quizData.length - 1) {
+        setScreenMode('nameInput');
         return;
       }
 
@@ -337,10 +356,6 @@ function App() {
         setResult(null);
       } else {
         setResult('✨全問終了です！✨');
-        // 2秒後にホームページに戻す
-        setTimeout(() => {
-          resetGame();
-        }, 2000);
       }
     }, 1500);
   };
@@ -558,7 +573,54 @@ if (quizData.length === 0) {
   return <div className="App"><div className="loading-message"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div></div>;
 }
 
-  // 5. ゲーム開始済み ＆ クイズ表示
+// 5. 名前入力画面
+if (screenMode === 'nameInput') {
+  return (
+    <div className="App">
+      <h1>ゲーム終了！</h1>
+      <p>あなたのスコア: {score} pt</p>
+      <form onSubmit={registerRanking}>
+        <p>ランキングに登録する名前を入力してください</p>
+        <input
+          type="text"
+          value={inputName}
+          onChange={(e) => setInputName(e.target.value)}
+          placeholder="名前を入力"
+          required
+          autoFocus
+        />
+        <button type="submit">ランキングを見る</button>
+      </form>
+    </div>
+  );
+}
+
+// 6. ランキング表示画面
+if (screenMode === 'ranking') {
+  return (
+    <div className="ranking-container">
+      <h1 className="ranking-title">🏆 TOP RANKERS</h1>
+      <div className="current-player-card">
+        <p>YOUR SCORE: <span className="highlight">{score}</span> pt</p>
+      </div>
+      <div className="ranking-board">
+        {ranking.map((entry, index) => (
+          <div key={index} className={`ranking-item rank-${index + 1}`}>
+            <span className="rank-number">{index + 1}</span>
+            <span className="rank-name">{entry.name}</span>
+            <span className="rank-score">{entry.score} pt</span>
+          </div>
+        ))}
+      </div>
+      <button className="retry-button" onClick={() => window.location.reload()}>
+        PLAY AGAIN
+      </button>
+    </div>
+  );
+}
+
+  // 7. ゲーム開始済み ＆ クイズ表示
+  const currentQuestion = quizData[currentQuestionIndex];
   const progressPercentage = ((currentQuestionIndex + 1) / quizData.length) * 100;
   const timerColor = timeLeft <= 3 ? 'danger' : '';
 
