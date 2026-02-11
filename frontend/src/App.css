@@ -40,3 +40,95 @@
 .read-the-docs {
   color: #888;
 }
+
+/* ランキング全体のコンテナ */
+.ranking-container {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  padding: 40px 20px;
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+  max-width: 500px;
+  margin: 20px auto;
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* タイトルのアニメーション */
+.ranking-title {
+  font-size: 2.5rem;
+  color: #00fff2;
+  text-shadow: 0 0 10px #00fff2, 0 0 20px #00fff2;
+  margin-bottom: 30px;
+  letter-spacing: 2px;
+}
+
+/* ランキングボード */
+.ranking-board {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+/* 各ランキング行 */
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.ranking-item:hover {
+  transform: scale(1.03);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 順位ごとの装飾（1位は金、2位は銀、3位は銅） */
+.rank-1 { border: 2px solid #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+.rank-2 { border: 2px solid #c0c0c0; }
+.rank-3 { border: 2px solid #cd7f32; }
+
+.rank-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  width: 40px;
+  color: #00fff2;
+}
+
+.rank-name {
+  flex: 1;
+  text-align: left;
+  font-size: 1.2rem;
+  margin-left: 10px;
+}
+
+.rank-score {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
+}
+
+/* リトライボタン */
+.retry-button {
+  background: transparent;
+  color: #00fff2;
+  border: 2px solid #00fff2;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.retry-button:hover {
+  background: #00fff2;
+  color: #1a1a2e;
+  box-shadow: 0 0 20px #00fff2;
+}
