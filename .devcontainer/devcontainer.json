@@ -19,5 +19,6 @@
   // 変更点: DBのポート (5432) を転送に追加
   "forwardPorts": [5173, 3001, 5432],
   "postCreateCommand": "npm install  --prefix frontend && npm install --prefix backend",
+  "postStartCommand": "sh .devcontainer/run_migrations.sh",
   "remoteUser": "node"
 }
