@@ -6,23 +6,25 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
 }
 
 #root {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
-.App {
+.app {
   width: 100%;
-  max-width: 600px;
-  padding: 20px;
+  max-width: 700px;
   background: white;
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
   animation: slideUp 0.5s ease-out;
 }
 
@@ -38,628 +40,394 @@ body {
 }
 
 /* ===== ログイン画面 ===== */
-.App h1 {
+.login-container {
+  padding: 60px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%);
+}
+
+.login-header {
+  margin-bottom: 50px;
+}
+
+.login-header h1 {
+  font-size: 2.5rem;
   color: #667eea;
-  font-size: 2rem;
-  margin-bottom: 30px;
-  font-weight: bold;
+  margin-bottom: 10px;
+  font-weight: 700;
 }
 
-.App form {
+.login-container form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 16px;
+}
+
+.login-container form h2 {
+  font-size: 1.5rem;
+  color: #333;
   margin-bottom: 20px;
+  text-align: center;
 }
 
-.App form div {
-  display: flex;
-  flex-direction: column;
-}
-
-.App form input {
-  padding: 15px;
-  font-size: 1rem;
+.login-container input {
+  padding: 14px 16px;
+  font-size: 0.95rem;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   transition: all 0.3s ease;
 }
 
-.App form input:focus {
+.login-container input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+  background-color: #f8f9ff;
 }
 
-.App form button {
-  padding: 15px;
-  font-size: 1.1rem;
-  font-weight: bold;
+.login-container button {
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 600;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  margin-top: 8px;
 }
 
-.App form button:hover {
+.login-container button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
-.App form button:active {
+.login-container button:active {
   transform: translateY(0);
 }
 
-/* ===== ホームページ ===== */
-.home-container {
+.register-message {
+  color: #d32f2f;
+  font-size: 0.9rem;
+  margin-top: 12px;
   text-align: center;
 }
 
-.home-header {
+/* ===== クイズコンテナ ===== */
+.quiz-container {
+  padding: 40px 35px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.quiz-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
 }
 
-.home-header h1 {
-  margin-bottom: 0;
-  font-size: 2.5rem;
+.quiz-header h1 {
+  font-size: 2.2rem;
+  color: #667eea;
+  font-weight: 700;
+  margin: 0;
 }
 
-.logout-btn {
+.logout-button {
   padding: 10px 20px;
   background-color: #ff6b6b;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
 }
 
-.logout-btn:hover {
+.logout-button:hover {
   background-color: #ee5a52;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
 
-.home-content {
-  background: linear-gradient(135deg, #f5f7ff 0%, #f0f1ff 100%);
-  padding: 40px;
-  border-radius: 15px;
-  margin-bottom: 20px;
+/* ===== モード選択画面 ===== */
+.mode-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.home-content p {
+.mode-selector h2 {
+  font-size: 1.5rem;
   color: #333;
-  margin-bottom: 15px;
-  line-height: 1.6;
-}
-
-.home-content p:first-child {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #667eea;
-}
-
-.home-content p:last-of-type {
-  font-size: 0.95rem;
-  color: #666;
-}
-
-.start-button {
-  padding: 18px 50px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: inline-block;
-}
-
-.start-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-}
-
-.start-button:active {
-  transform: translateY(-1px);
-}
-
-/* ===== モード選択ボタン ===== */
-.modes-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 15px;
-  margin-top: 30px;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: 600;
 }
 
 .mode-button {
-  padding: 25px;
+  width: 100%;
+  padding: 28px 20px;
+  margin-bottom: 16px;
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: left;
-  font-weight: bold;
+  font-weight: 600;
   color: white;
-}
-
-.mode-title {
-  font-size: 1.2rem;
-  margin-bottom: 8px;
-}
-
-.mode-description {
-  font-size: 0.85rem;
-  opacity: 0.9;
-}
-
-.itpassport-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.basic-btn {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.applied-btn {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .mode-button:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .mode-button:active {
   transform: translateY(-2px);
 }
 
-@media (max-width: 600px) {
-  .mode-title {
-    font-size: 1rem;
-  }
-
-  .mode-description {
-    font-size: 0.75rem;
-  }
+.mode-button small {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-top: 8px;
+  font-weight: 500;
 }
 
-/* ===== クイズ画面 ===== */
-.quiz-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #e0e0e0;
+.mode-button.itpassport {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.quiz-info {
-  display: flex;
-  gap: 30px;
-  flex: 1;
+.mode-button.basic {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.info-item {
-  text-align: center;
+.mode-button.applied {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
-.info-label {
-  font-size: 0.85rem;
-  color: #999;
-  text-transform: uppercase;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.info-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #667eea;
-}
-
-.score-item .info-value {
-  color: #4CAF50;
-}
-
-.lives-item .info-value {
-  color: #ff6b6b;
-}
-
-.timer-item .info-value {
-  color: #ff9800;
-}
-
-.timer-item .info-value.danger {
-  color: #ff0000;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.progress-bar {
+.submit-button {
   width: 100%;
-  height: 8px;
-  background-color: #e0e0e0;
-  border-radius: 5px;
-  overflow: hidden;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   margin-top: 20px;
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  transition: width 0.3s ease;
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
-/* ===== 問題表示 ===== */
-.question-card {
-  background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
-  border: 2px solid #e0e0e0;
-  border-radius: 15px;
-  padding: 30px;
-  margin: 30px 0;
-  min-height: 150px;
+/* ===== クイズ画面 ===== */
+.quiz-stats {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: space-around;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7ff 0%, #f0f1ff 100%);
+  border-radius: 12px;
+  font-weight: 600;
+  color: #667eea;
 }
 
-.question-text {
+.quiz-stats div {
+  text-align: center;
+}
+
+.quiz-container h2 {
   font-size: 1.4rem;
   color: #333;
-  font-weight: 600;
-  line-height: 1.8;
-  margin: 0;
+  margin-bottom: 25px;
+  line-height: 1.6;
+  text-align: center;
 }
 
-/* ===== 回答フォーム ===== */
-.answer-form {
-  display: flex;
-  gap: 10px;
-  margin: 25px 0;
+.options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
-.answer-input {
-  flex: 1;
-  padding: 15px;
-  font-size: 1rem;
+.option-button {
+  padding: 16px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: linear-gradient(135deg, #f5f7ff 0%, #efefff 100%);
+  color: #333;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
-  transition: all 0.3s;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
 }
 
-.answer-input:focus {
+.option-button:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.option-button:active {
+  transform: translateX(2px);
+}
+
+/* ===== PvP 画面 ===== */
+.quiz-container button[onClick] {
+  padding: 12px 20px;
+  background-color: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.quiz-container button[onClick]:hover {
+  background-color: #764ba2;
+  transform: translateY(-2px);
+}
+
+.quiz-container h1 {
+  font-size: 2rem;
+  color: #667eea;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.quiz-container h3 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-top: 20px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.quiz-container p {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.quiz-container select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quiz-container select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
 }
 
-.answer-input:disabled {
-  background-color: #f5f5f5;
-  cursor: not-allowed;
-}
-
-/* ===== 4択オプションボタン ===== */
-.options-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin: 25px 0;
-}
-
-.option-button {
-  padding: 18px;
-  font-size: 1rem;
-  font-weight: 600;
-  background-color: #f9f9f9;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: left;
-  color: #333;
-}
-
-.option-button:hover:not(:disabled) {
-  border-color: #667eea;
-  background-color: #f0f2ff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-}
-
-.option-button.selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: #667eea;
-  font-weight: bold;
-}
-
-.option-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.option-button.disabled {
-  pointer-events: none;
-}
-
-@media (max-width: 600px) {
-  .options-container {
-    grid-template-columns: 1fr;
-  }
-}
-
-.submit-button {
-  padding: 15px 30px;
-  font-size: 1rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.submit-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-}
-
-.submit-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ===== 結果メッセージ ===== */
-.result-message {
-  margin-top: 20px;
-  padding: 20px;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.result-message.correct {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border-left: 4px solid #4CAF50;
-}
-
-.result-message.incorrect {
-  background-color: #ffebee;
-  color: #c62828;
-  border-left: 4px solid #f44336;
-}
-
-.result-message.neutral {
-  background-color: #fff3e0;
-  color: #e65100;
-  border-left: 4px solid #ff9800;
-}
-
-/* ===== ローディング ===== */
-.loading-message {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-  font-size: 1.1rem;
-}
-
-.loading-message p {
-  animation: fadeInOut 1.5s infinite;
-}
-
-@keyframes fadeInOut {
-  0%, 100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* ===== レスポンシブ ===== */
-@media (max-width: 600px) {
-  .App {
-    border-radius: 15px;
-  }
-
-  .App h1 {
-    font-size: 1.5rem;
-  }
-
-  .question-text {
-    font-size: 1.1rem;
-  }
-
-  .quiz-info {
-    gap: 15px;
-  }
-
-  .info-value {
-    font-size: 1.2rem;
-  }
-
-  .home-header {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .logout-btn {
-    width: 100%;
-  }
-}
-
-/* ===== ランキング画面 ===== */
-.ranking-container {
-  width: 100%;
-  max-width: 600px;
-  padding: 20px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  text-align: center;
-}
-
-.ranking-title {
-  color: #667eea;
-  font-size: 2rem;
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-.current-player-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 30px;
-  font-size: 1.2rem;
-}
-
-.current-player-card .highlight {
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.ranking-board {
+/* ===== ランキング ===== */
+.ranking-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 30px;
 }
 
 .ranking-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 100px;
   align-items: center;
-  padding: 15px;
-  background: #f5f5f5;
+  gap: 15px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f7ff 0%, #efefff 100%);
   border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  border-left: 4px solid #667eea;
 }
 
-.rank-number {
-  font-size: 1.5rem;
+.ranking-item span:first-child {
+  font-weight: 700;
   color: #667eea;
-  min-width: 40px;
+  font-size: 1.2rem;
   text-align: center;
 }
 
-.rank-name {
-  flex: 1;
-  text-align: left;
+.ranking-item span:nth-child(2) {
+  font-weight: 600;
   color: #333;
-  padding: 0 20px;
 }
 
-.rank-score {
+.ranking-item span:nth-child(3) {
+  font-weight: 700;
   color: #764ba2;
-  min-width: 80px;
   text-align: right;
 }
 
-.rank-1 {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+.ranking-item span:nth-child(4) {
+  font-size: 0.8rem;
+  color: #999;
+  text-align: right;
 }
 
-.rank-1 .rank-number,
-.rank-1 .rank-score {
-  color: #d4af37;
-  font-size: 1.3rem;
-}
-
-.rank-2 {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-  box-shadow: 0 4px 15px rgba(192, 192, 192, 0.3);
-}
-
-.rank-2 .rank-number,
-.rank-2 .rank-score {
-  color: #696969;
-  font-size: 1.2rem;
-}
-
-.rank-3 {
-  background: linear-gradient(135deg, #cd7f32 0%, #e8a76a 100%);
-  box-shadow: 0 4px 15px rgba(205, 127, 50, 0.3);
-}
-
-.rank-3 .rank-number,
-.rank-3 .rank-score {
-  color: #8b4513;
-  font-size: 1.2rem;
-}
-
-.retry-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  width: 100%;
-  max-width: 300px;
-}
-
-.retry-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-}
-
+/* ===== レスポンシブ ===== */
 @media (max-width: 600px) {
-  .ranking-container {
-    padding: 15px;
+  .app {
+    max-width: 100%;
+    border-radius: 0;
   }
 
-  .ranking-title {
-    font-size: 1.5rem;
+  .login-container {
+    padding: 40px 25px;
+  }
+
+  .quiz-container {
+    padding: 25px 20px;
+  }
+
+  .quiz-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .quiz-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .mode-button {
+    padding: 20px 15px;
+    font-size: 1rem;
+  }
+
+  .quiz-stats {
+    flex-direction: column;
+    gap: 10px;
   }
 
   .ranking-item {
-    font-size: 1rem;
-    padding: 12px;
+    grid-template-columns: 50px 1fr 80px;
+    gap: 10px;
   }
 
-  .rank-number {
-    min-width: 30px;
-  }
-
-  .rank-score {
-    min-width: 70px;
+  .ranking-item span:nth-child(4) {
+    display: none;
   }
 }
-
