@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// ベースURLを取得（設定がなければローカル）
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// 1. ベースURLを取得（末尾の / は除去する）
+const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, "");
 
-// 各エンドポイントを組み立てる
-const API_URL = `${BASE_URL}/questions`;
-const LOGIN_URL = `${BASE_URL}/login`;
-const REGISTER_URL = `${BASE_URL}/register`; // これも作っておくと便利です
+// 2. 常に /api をベースにする
+const API_BASE = `${cleanBaseUrl}/api`;
+
+// 3. 各エンドポイントを組み立て
+const API_URL = `${API_BASE}/questions`;
+const LOGIN_URL = `${API_BASE}/login`;
+const REGISTER_URL = `${API_BASE}/register`;
 // ローカルストレージのキー
 const RANKING_KEY = 'quiz_ranking_data';
 
