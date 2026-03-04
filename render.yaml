@@ -43,6 +43,7 @@ services:
 
   - type: web
     name: itgo-frontend
+    runtime: static
     region: oregon
     branch: feature/itgo-frontend
     buildCommand: |
