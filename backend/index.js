@@ -16,12 +16,18 @@ app.use(express.json());
 
 // DevContainerの環境変数からDB接続情報を取得
 const pool = new Pool({
+  // DATABASE_URLがあればそれを使い、なければ個別設定を使う
+  connectionString: process.env.DATABASE_URL,
   // docker-compose.ymlで設定したサービス名 'db' をホスト名として使用
   host: process.env.DATABASE_HOST || 'db', 
   port: process.env.DATABASE_PORT || 5432,
   user: process.env.DATABASE_USER || 'user',
   password: process.env.DATABASE_PASSWORD || 'password',
   database: process.env.DATABASE_NAME || 'dev_db',
+  // Render（production）ではSSLを必須にする
+  ssl: process.env.NODE_ENV === 'production' 
+    ? { rejectUnauthorized: false } 
+    : false,
 });
 
 
