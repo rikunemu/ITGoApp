@@ -41,7 +41,7 @@ services:
           name: itgo-db
           property: database
 
-  - type: static
+  - type: web
     name: itgo-frontend
     region: oregon
     branch: feature/itgo-frontend
