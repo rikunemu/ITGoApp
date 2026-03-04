@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// バックエンドAPIのURL
-const API_URL = 'http://localhost:3001/api/questions';
+// バックエンドAPIのURL (Vite のビルド時に置き換え)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/questions';
 // ログイン画面のURL(ログインしているかどうかでクイズ画面とのだし分けを行う。今は未実装)
-const LOGIN_URL = 'http://localhost:3001/api/login';
+const LOGIN_URL = import.meta.env.VITE_API_URL ||'http://localhost:3001/api/login';
 // ローカルストレージのキー
 const RANKING_KEY = 'quiz_ranking_data';
 

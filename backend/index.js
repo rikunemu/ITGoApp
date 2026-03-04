@@ -4,11 +4,11 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-const port = 3001; 
+const port = process.env.PORT || 3001; 
 
 // フロントエンドのオリジンを設定 (Reactの実行ポート)
 app.use(cors({
-  origin: 'http://localhost:5173'
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173'
 }));
 
 // JSONボディパーサーを設定
