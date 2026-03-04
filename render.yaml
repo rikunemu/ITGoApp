@@ -40,10 +40,9 @@ services:
         fromDatabase:
           name: itgo-db
           property: database
-
   - type: web
     name: itgo-frontend
-    region: oregon
+    runtime: static
     branch: feature/itgo-frontend
     buildCommand: |
       cd frontend
