@@ -1,12 +1,8 @@
-databases:
-  - name: itgo-db
-    plan: starter     # 無料枠
-    region: oregon    # 任意
-
 services:
   - type: web
     name: itgo-backend
-    env: node
+    runtime: node
+    plan: free
     region: oregon
     branch: feature/itgo-backend
     buildCommand: |
@@ -19,30 +15,13 @@ services:
       - key: PORT
         value: "3001"
       - key: FRONTEND_ORIGIN
-        value: https://<your‑frontend‑service‑url>
-      - key: DATABASE_HOST       # 後述のままでも OK
-        fromDatabase:
-          name: itgo-db
-          property: host
-      - key: DATABASE_PORT
-        fromDatabase:
-          name: itgo-db
-          property: port
-      - key: DATABASE_USER
-        fromDatabase:
-          name: itgo-db
-          property: user
-      - key: DATABASE_PASSWORD
-        fromDatabase:
-          name: itgo-db
-          property: password
-      - key: DATABASE_NAME
-        fromDatabase:
-          name: itgo-db
-          property: database
+        value: https://<your-frontend-service-url>
+      # DATABASE_* 環境変数はマネージド DB を別途作成した後にダッシュボードで追加してください
+
   - type: web
     name: itgo-frontend
     runtime: static
+    plan: free
     branch: feature/itgo-frontend
     buildCommand: |
       cd frontend
@@ -51,4 +30,4 @@ services:
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
-        value: https://<your‑backend‑service‑url>/api/questions
+        value: https://<your-backend-service-url>/api/questions
