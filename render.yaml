@@ -1,10 +1,26 @@
+databases:
+  - name: itgo-db
+    plan: starter     # 無料枠
+    region: oregon    # 任意
+
 services:
-  - type: postgres
-    name: itgo-db
-    plan: starter        # 無料枠
-    databaseName: dev_db
+  - type: web
+    name: itgo-backend
+    env: node
+    region: oregon
+    branch: feature/itgo-backend
+    buildCommand: |
+      cd backend
+      npm install
+    startCommand: |
+      cd backend
+      npm start
     envVars:
-      - key: DATABASE_HOST
+      - key: PORT
+        value: "3001"
+      - key: FRONTEND_ORIGIN
+        value: https://<your‑frontend‑service‑url>
+      - key: DATABASE_HOST       # 後述のままでも OK
         fromDatabase:
           name: itgo-db
           property: host
@@ -25,27 +41,10 @@ services:
           name: itgo-db
           property: database
 
-  - type: web
-    name: itgo-backend
-    env: node
-    region: oregon        # お好みで
-    branch: main          # GitHub のブランチ名
-    buildCommand: |
-      cd backend
-      npm install
-    startCommand: |
-      cd backend
-      npm start          # package.json の start が "node index.js"
-    envVars:
-      - key: PORT
-        value: "3001"    # Render は自動で $PORT を設定しますが明示しても可
-      - key: FRONTEND_ORIGIN
-        value: https://<your‑frontend‑service‑url>   # 後で置き換える
-
   - type: static
     name: itgo-frontend
     region: oregon
-    branch: main
+    branch: feature/itgo-frontend
     buildCommand: |
       cd frontend
       npm install
