@@ -2,6 +2,8 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3001; 
@@ -35,23 +37,40 @@ const pool = new Pool({
 const initializeDatabase = async () => {
   let client;
   try {
+    console.log('Postgres is ready. Checking migrations...');
     client = await pool.connect();
 
-    // マイグレーション実行済みか確認
-    const migrationsExist = await client.query(`
-      SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'migrations');
-    `);
+    // マイグレーションファイルが置いてあるディレクトリを指定
+    // Render上のパスに合わせて __dirname を使用
+    const migrationDir = path.join(__dirname, '.devcontainer', 'migrations');
 
-    if (!migrationsExist.rows[0].exists) {
-      console.warn('⚠️  マイグレーションテーブルが見つかりません');
-      console.warn('ℹ️  コンテナ環境では: docker-compose up を実行してください');
-      console.warn('ℹ️  ローカル環境では: npm run migrate を実行してください');
+    if (fs.existsSync(migrationDir)) {
+      // ファイル一覧を取得してソート（01_init.sql, 02_data.sql などの順で実行するため）
+      const files = fs.readdirSync(migrationDir)
+        .filter(file => file.endsWith('.sql'))
+        .sort();
+
+      for (const file of files) {
+        const filePath = path.join(migrationDir, file);
+        console.log(`Applying migration: ${file}`);
+        
+        const sql = fs.readFileSync(filePath, 'utf8');
+        
+        try {
+          // SQLファイルの中身を実行
+          await client.query(sql);
+        } catch (err) {
+          // すでにテーブルがある場合などのエラーを「警告」として処理し、停止させない
+          console.warn(`⚠️ Warning while applying ${file}: ${err.message}`);
+        }
+      }
+      console.log('✓ All migrations processed.');
     } else {
-      console.log('✓ データベーススキーマは準備されています');
+      console.warn(`⚠️ Migration directory not found at: ${migrationDir}`);
     }
 
   } catch (err) {
-    console.error('データベース初期化エラー:', err.message);
+    console.error('❌ データベース初期化エラー:', err.message);
   } finally {
     if (client) {
       client.release();
