@@ -42,7 +42,7 @@ const initializeDatabase = async () => {
 
     // マイグレーションファイルが置いてあるディレクトリを指定
     // Render上のパスに合わせて __dirname を使用
-    const migrationDir = path.join(__dirname, '.devcontainer', 'migrations');
+    const migrationDir = path.join(__dirname, '..','.devcontainer', 'migrations');
 
     if (fs.existsSync(migrationDir)) {
       // ファイル一覧を取得してソート（01_init.sql, 02_data.sql などの順で実行するため）
