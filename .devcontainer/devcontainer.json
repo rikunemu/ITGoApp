@@ -1,16 +1,24 @@
 {
-  "name": "React + Node.js Dev Container",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "name": "React + Node.js Dev Container with PostgreSQL",
+  // 変更点: Dockerfileの代わりに docker-compose.yml を使用
+  "dockerComposeFile": "docker-compose.yml",
+  // 変更点: docker-compose.yml で定義した 'app' サービスをメインコンテナとする
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
   "settings": {
     "terminal.integrated.defaultProfile.linux": "bash"
   },
   "extensions": [
     "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode"
+    "esbenp.prettier-vscode",
+    // 便利な拡張機能: PostgreSQL接続用
+    "ms-ossdata.vscode-postgresql", 
+    "ms-azuretools.vscode-docker"
   ],
-  "forwardPorts": [5173, 3001],
-  "postCreateCommand": "npm install --prefix frontend && npm install --prefix backend",
+  // 変更点: DBのポート (5432) を転送に追加
+  "forwardPorts": [5173, 3001, 5432],
+  "postCreateCommand": "npm install  --prefix frontend && npm install --prefix backend",
+  "postStartCommand": "sh .devcontainer/run_migrations.sh",
   "remoteUser": "node"
 }
