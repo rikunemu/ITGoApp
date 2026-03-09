@@ -38,6 +38,8 @@ function App() {
 
   // 取得した全問題リスト
   const [quizData, setQuizData] = useState([]);
+  // AIの生レスポンスを表示するための状態
+  const [aiRaw, setAiRaw] = useState(null);
   // 現在出題中の問題のインデックス
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   // ユーザーの回答
@@ -64,7 +66,7 @@ function App() {
   const [screenMode, setScreenMode] = useState('quiz'); // 'quiz', 'nameInput', 'ranking'
   const [inputName, setInputName] = useState('');
 
-
+  
   const handleLogin = async (e) => {
     e.preventDefault();
     console.log("--- ログイン処理開始 ---");
@@ -156,38 +158,6 @@ function App() {
     }
   };
 
-//   // --- ログイン処理 ---
-// const handleLogin = async (e) => {
-//   e.preventDefault();
-//   console.log("ログインボタンが押されました"); // ← 1. これが出るか？
-
-//   try {
-//     console.log("サーバーへ通信を開始します...", { email, password }); // ← 2. これが出るか？
-    
-//     const response = await fetch(LOGIN_URL, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ email, password }),
-//     });
-
-//     console.log("サーバーから応答がありました:", response.status); // ← 3. ステータスコードを確認
-
-//     const data = await response.json();
-    
-//     if (response.ok) {
-//       console.log("ログイン成功！トークン:", data.token);
-//       localStorage.setItem('token', data.token);
-//       setToken(data.token);
-//     } else {
-//       console.error("ログイン失敗:", data.error);
-//       alert(data.error);
-//     }
-//   } catch (error) {
-//     console.error("通信エラーが発生しました:", error); // ← 4. ネットワークエラーなど
-//     alert("サーバーに接続できませんでした");
-//   }
-// };
-
   // --- ゲームリセット関数 ---
   const resetGame = () => {
     setScore(0);
@@ -227,41 +197,90 @@ function App() {
     setScreenMode('ranking'); // ランキング表示へ
   };
 
-  // --- データ取得 ---
-  useEffect(() => {
-  console.log("useEffectが実行されました。現在のtoken:", token, "gameMode:", gameMode);
+//   // --- データ取得 ---
+//   useEffect(() => {
+//   console.log("useEffectが実行されました。現在のtoken:", token, "gameMode:", gameMode);
 
+//   const fetchQuiz = async () => {
+//     // 1. トークンがない場合または、ゲームモードがまだ選択されていない場合
+//     if (!token || !gameMode) {
+//       console.log("トークンがないか、ゲームモードがまだ選択されていないため、読み込みを終了します。");
+//       setIsLoading(false);
+//       return;
+//     }
+
+//     // 2. トークンがある場合、データを取得
+//     try {
+//       console.log("APIからデータを取得します（モード: ${gameMode}）...");
+//       const response = await fetch(`${API_URL}?mode=${gameMode}`);
+      
+//       if (!response.ok) {
+//         throw new Error(`サーバーエラー: ${response.status}`);
+//       }
+
+//       const data = await response.json();
+//       console.log("取得データ:", data);
+//       setQuizData(shuffleArray(data));
+//     } catch (err) {
+//       console.error("フェッチエラー:", err);
+//       setResult("データの取得に失敗しました。");
+//     } finally {
+//       console.log("読み込み完了（setIsLoading(false)を実行）");
+//       setIsLoading(false);
+//     }
+//   };
+
+//   fetchQuiz();
+// }, [token, gameMode]);
+
+  // --- データ取得 ---
+useEffect(() => {
   const fetchQuiz = async () => {
-    // 1. トークンがない場合または、ゲームモードがまだ選択されていない場合
     if (!token || !gameMode) {
-      console.log("トークンがないか、ゲームモードがまだ選択されていないため、読み込みを終了します。");
       setIsLoading(false);
       return;
     }
 
-    // 2. トークンがある場合、データを取得
     try {
-      console.log("APIからデータを取得します（モード: ${gameMode}）...");
-      const response = await fetch(`${API_URL}?mode=${gameMode}`);
-      
-      if (!response.ok) {
-        throw new Error(`サーバーエラー: ${response.status}`);
+      setIsLoading(true);
+
+      // 直接AIで問題を生成する（DBは使わない）
+      const genResp = await fetch(`${API_URL}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ difficulty: gameMode, count: 5 })
+      });
+
+      if (!genResp.ok) {
+        throw new Error(`サーバーエラー (GENERATE): ${genResp.status}`);
       }
 
-      const data = await response.json();
-      console.log("取得データ:", data);
+      const body = await genResp.json();
+      if (body && body.success === false) {
+        // 構造化できない応答はデバッグ表示用に保持
+        setAiRaw(body.raw || JSON.stringify(body));
+        setQuizData([]);
+        return;
+      }
+
+      const { success, data } = body;
+      if (!success) {
+        throw new Error('問題生成に失敗しました');
+      }
+
+      setAiRaw(null);
       setQuizData(shuffleArray(data));
     } catch (err) {
-      console.error("フェッチエラー:", err);
-      setResult("データの取得に失敗しました。");
+      console.error('フェッチエラー:', err);
+      setResult('データの取得に失敗しました。');
     } finally {
-      console.log("読み込み完了（setIsLoading(false)を実行）");
       setIsLoading(false);
     }
   };
 
   fetchQuiz();
 }, [token, gameMode]);
+
 
   // ⏱️ タイムリミット機能（10秒のカウントダウン）
   useEffect(() => {
@@ -370,40 +389,7 @@ function App() {
   const handleOptionClick = (option) => {
     setUserAnswer(option);
   };
-
-  //   if (isCorrect) {
-  //     setResult('正解です！🎉');
-  //     setScore((prev) => prev + 10); // ⭐ 正解時に10pt加算
-  //   } else {
-  //     setResult(`不正解です。正解は「${currentQuestion.correct_answer}」でした。`);
-  //     // 不正解時にLivesを減らす
-  //     setLives((prev) => prev - 1);
-  //   }
-
-  //   // 1.5秒後に次の問題へ進む（または終了）
-  //   setTimeout(() => {
-  //     if(lives === 0){
-  //       setResult('💀3問間違えたので終了します💀');
-  //     }else if(currentQuestionIndex < quizData.length - 1) {
-  //       setCurrentQuestionIndex(currentQuestionIndex + 1);
-  //       setUserAnswer('');
-  //       setResult(null);
-  //     } else {
-  //       // 全問終了後の処理
-  //       setResult('✨全問終了です！✨');
-  //       //setScore(0); // ⭐ 全問終了時にスコアリセット
-  //     }
-  //   }, 1500);
-  // };
-
-  // if (isLoading) {
-  //   return <div className="App"><h1>ITでGo！</h1><p>問題を読み込み中です...</p></div>;
-  // }
-
-  // if (quizData.length === 0 && !isLoading) {
-  //    return <div className="App"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div>;
-  // }
-  
+ 
   // クイズの表示
 
   // --- 表示の切り分け ---
@@ -577,7 +563,21 @@ if (isLoading) {
 
 // 4. ゲーム開始済みで、読み込みも終わったが、問題が0件の時
 if (quizData.length === 0) {
-  return <div className="App"><div className="loading-message"><h1>ITでGo！</h1><p>現在、出題できる問題がありません。</p></div></div>;
+  return (
+    <div className="App">
+      <div className="loading-message">
+        <h1>ITでGo！</h1>
+        {aiRaw ? (
+          <div className="ai-raw">
+            <p>AIからの応答（構造化できませんでした）:</p>
+            <pre style={{ whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: '12px', borderRadius: '6px' }}>{aiRaw}</pre>
+          </div>
+        ) : (
+          <p>現在、出題できる問題がありません。</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // 5. 名前入力画面

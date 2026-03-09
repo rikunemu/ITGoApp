@@ -8,6 +8,10 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001; 
 
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 // フロントエンドのオリジンを設定 (Reactの実行ポート)
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173'
@@ -81,6 +85,33 @@ const initializeDatabase = async () => {
 
 // --- APIエンドポイント ---
 
+// 利用可能なAIモデル一覧を取得
+app.get('/api/available-models', async (req, res) => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API キーが設定されていません' });
+    }
+    
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1/models?key=' + apiKey
+    );
+    
+    if (!response.ok) {
+      throw new Error(`API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    res.json({
+      success: true,
+      models: data.models || []
+    });
+  } catch (error) {
+    console.error('モデル一覧取得エラー:', error.message);
+    res.status(500).json({ error: 'モデル一覧取得に失敗しました' });
+  }
+});
+
 // 全クイズ問題を取得するAPI（モード指定可能）
 app.get('/api/questions', async (req, res) => {
   try {
@@ -101,6 +132,114 @@ app.get('/api/questions', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('クイズ取得エラー:', err.message);
+    res.status(500).json({ error: 'データ取得に失敗しました' });
+  }
+});
+
+// --- 問題自動生成エンドポイント
+app.post("/api/questions/generate", async (req, res) => {
+  try {
+    const { difficulty, count = 5 } = req.body; // difficulty: "easy", "normal", "hard"
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API キーが設定されていません' });
+    }
+
+    // 優先モデルを環境変数で指定可能
+    const preferredModel = process.env.GENERATIVE_MODEL || 'gemini-1.5-flash';
+
+    // 利用可能モデル一覧を取得して、利用可能なモデルを選択する
+    const listResp = await fetch('https://generativelanguage.googleapis.com/v1/models?key=' + apiKey);
+    if (!listResp.ok) {
+      throw new Error(`ListModels returned ${listResp.status}`);
+    }
+    const listData = await listResp.json();
+    const availableModels = listData.models || [];
+
+    // 試行的に優先モデルを含むモデルを探す。見つからなければ最初の 'bison' か 'gemini' を使う。
+    let chosenModel = availableModels.find(m => (m.name || '').includes(preferredModel));
+    if (!chosenModel) {
+      chosenModel = availableModels.find(m => (m.name || '').toLowerCase().includes('bison'))
+        || availableModels.find(m => (m.name || '').toLowerCase().includes('gemini'))
+        || availableModels[0];
+    }
+
+    if (!chosenModel || !chosenModel.name) {
+      return res.status(500).json({ error: '利用可能な生成モデルが見つかりませんでした', available: availableModels.map(m => m.name) });
+    }
+
+    const model = genAI.getGenerativeModel({ model: chosenModel.name });
+
+    const examInstructions = {
+      itpassport: 'ITパスポート向けの基礎的な4択問題。用語・基本概念・業務に関する初歩的な知識を問う問題を出してください。',
+      basic: '基本情報技術者試験向けの中級レベルの4択問題。アルゴリズム、データベース、ネットワーク、OSなどの基礎からやや応用まで問う問題を出してください。',
+      applied: '応用情報技術者試験向けの上級レベルの4択問題。設計、運用、セキュリティ、事例に基づく応用的な問題を出してください。'
+    };
+
+    const modeNote = examInstructions[difficulty] || '一般的なIT知識を問う4択問題を出してください。';
+
+    const prompt = `
+あなたはIT試験の問題出題専門家です。以下の条件で${count}問のクイズ問題を**日本語**で作成してください。
+
+・このセットは「${difficulty}」モード向けです。目的に応じて次の指示に従ってください：
+  ${modeNote}
+
+・出力は**JSON配列のみ**とし、余計な説明文やMarkdownを含めないこと。
+・各要素はオブジェクトで、以下のフィールドを必ず含むこと。
+  {
+    "question": "<問題文>",
+    "options": ["選択肢1", "選択肢2", "選択肢3", "選択肢4"],
+    "correct_answer": "選択肢2",
+    "mode": "${difficulty || 'general'}"
+  }
+
+・各問題は日本語で簡潔に記述し、選択肢は必ず4つ用意すること。
+  ・correct_answer は options のいずれかのテキストと完全一致させること。
+
+例: [ { ... }, { ... } ] のような正しいJSON配列を返してください。
+`;
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+
+    // Try to extract JSON array from the response
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+
+    if (!jsonMatch) {
+      // If extraction fails, return raw text so frontend can show it for debugging
+      return res.status(200).json({
+        success: false,
+        message: 'AIの応答はJSON形式ではありません',
+        raw: responseText
+      });
+    }
+
+    let questions;
+    try {
+      questions = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      return res.status(200).json({
+        success: false,
+        message: 'AIから抽出したJSONがパースできませんでした',
+        raw: jsonMatch[0]
+      });
+    }
+
+    // Normalize items to ensure required fields exist and correct types
+    const normalized = questions.map((q, idx) => ({
+      id: q.id || idx + 1,
+      question: q.question || q.prompt || q.text || '',
+      options: Array.isArray(q.options) ? q.options : (q.choices || []).slice(0,4),
+      correct_answer: q.correct_answer || q.answer || (Array.isArray(q.options) ? q.options[0] : ''),
+      mode: q.mode || difficulty || 'general'
+    }));
+
+    res.json({
+      success: true,
+      data: normalized
+    });
+    
+  } catch (error) {
+    console.error('クイズ取得エラー:', error.message);
     res.status(500).json({ error: 'データ取得に失敗しました' });
   }
 });
