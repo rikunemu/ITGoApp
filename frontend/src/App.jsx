@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// バックエンドAPIのURL
-const API_URL = 'http://localhost:3001/api/questions';
-// ログイン画面のURL(ログインしているかどうかでクイズ画面とのだし分けを行う。今は未実装)
-const LOGIN_URL = 'http://localhost:3001/api/login';
+// 1. ベースURLを取得（末尾の / は除去する）
+const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, "");
+
+// 2. 常に /api をベースにする
+const API_BASE = `${cleanBaseUrl}/api`;
+
+// 3. 各エンドポイントを組み立て
+const API_URL = `${API_BASE}/questions`;
+const LOGIN_URL = `${API_BASE}/login`;
+const REGISTER_URL = `${API_BASE}/register`;
 // ローカルストレージのキー
 const RANKING_KEY = 'quiz_ranking_data';
 
@@ -108,7 +115,7 @@ function App() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(LOGIN_URL.replace('/login', '/register'), {
+      const response = await fetch(REGISTER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
